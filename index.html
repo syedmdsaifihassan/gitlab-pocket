@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2433">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GitLab">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>GitLab Pocket</title>
+<style>
+:root{
+  --ink:#1f2433; --paper:#f4f5f8; --surface:#ffffff; --line:#e1e4ec; --muted:#6b7285;
+  --accent:#5b4fe0; --accent-ink:#ffffff; --ok:#1f9d6b; --bad:#d64545; --warn:#b67d08; --run:#2f7fd6;
+  --bar:#1f2433; --bar-ink:#e9ebf2;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#e9ebf2; --paper:#12151d; --surface:#1b1f2a; --line:#2a3040; --muted:#9097aa;
+    --accent:#8a80f5; --accent-ink:#12151d; --ok:#3fc48c; --bad:#f07070; --warn:#e2a93a; --run:#5ea6f0;
+    --bar:#0d1016; --bar-ink:#e9ebf2; color-scheme: dark;
+  }
+}
+*{box-sizing:border-box}
+html{height:100%}
+body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
+  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
+header{position:sticky;top:0;z-index:5;background:var(--bar);color:var(--bar-ink);
+  padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 12px;display:flex;align-items:center;gap:10px}
+header h1{font-size:19px;font-weight:650;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header button{background:none;border:0;color:var(--bar-ink);font-size:16px;padding:6px 4px}
+main{padding:12px 12px 24px;max-width:720px;margin:0 auto}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;background:var(--surface);
+  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav button{flex:1;background:none;border:0;color:var(--muted);padding:9px 0 8px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button svg{width:23px;height:23px}
+nav button.on{color:var(--accent)}
+.seg{display:flex;background:var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
+.seg button{flex:1;border:0;background:none;padding:7px 4px;border-radius:8px;font-size:14px;color:var(--ink)}
+.seg button.on{background:var(--surface);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.list{background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.row{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;color:var(--ink);font:inherit}
+.row:last-child{border-bottom:0}
+.row .t{font-weight:600;font-size:15.5px}
+.row .m{color:var(--muted);font-size:13px;margin-top:2px}
+.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor;margin-right:6px}
+.s-success{color:var(--ok)} .s-failed{color:var(--bad)} .s-running,.s-pending,.s-created{color:var(--run)} .s-canceled,.s-skipped,.s-manual{color:var(--muted)} .s-merged{color:var(--accent)} .s-opened{color:var(--ok)} .s-closed{color:var(--bad)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+.card h2{font-size:18px;margin:0 0 6px;line-height:1.3}
+.desc{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.btn{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
+.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
+.btn:disabled{opacity:.5}
+label{display:block;font-size:14px;font-weight:600;margin:12px 0 5px}
+input,textarea,select{width:100%;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+textarea{min-height:90px;resize:vertical}
+.hint{color:var(--muted);font-size:13px}
+.note{border-top:1px solid var(--line);padding:10px 0}
+.note b{font-size:14px}
+.empty{padding:28px 16px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:90%}
+.search{margin-bottom:12px}
+</style>
+</head>
+<body>
+<header><button id="back" hidden aria-label="Back">‹ Back</button><h1 id="title">GitLab</h1><button id="refresh" aria-label="Refresh">↻</button></header>
+<main id="view"></main>
+<nav id="tabs">
+  <button data-tab="mrs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-4"/></svg>Merge requests</button>
+  <button data-tab="issues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg>Issues</button>
+  <button data-tab="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7h7l2 2h9v10H3z"/></svg>Projects</button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</button>
+</nav>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ago = d => { const s=(Date.now()-new Date(d))/1000; if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; };
+const store = { get(k){try{return localStorage.getItem(k)}catch{return null}}, set(k,v){try{localStorage.setItem(k,v)}catch{}}, del(k){try{localStorage.removeItem(k)}catch{}} };
+let cfg = { host: store.get('gl_host') || '', token: store.get('gl_token') || '' };
+let me = null, stack = [], tab = 'mrs';
+
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.append(t); setTimeout(()=>t.remove(),2600); }
+
+async function api(path, opts={}){
+  const res = await fetch(cfg.host.replace(/\/$/,'') + '/api/v4' + path, {
+    method: opts.method || 'GET',
+    headers: { 'PRIVATE-TOKEN': cfg.token, ...(opts.body ? {'Content-Type':'application/json'} : {}) },
+    body: opts.body ? JSON.stringify(opts.body) : undefined
+  });
+  if (!res.ok) { let m=''; try{ const j=await res.json(); m=j.message||j.error||''; if(typeof m!=='string') m=JSON.stringify(m);}catch{} throw new Error(res.status + (m ? ': ' + m : '')); }
+  return res.status === 204 ? null : res.json();
+}
+
+function setTitle(t){ $('#title').textContent = t; $('#back').hidden = stack.length < 2; }
+function render(html){ $('#view').innerHTML = html; window.scrollTo(0,0); }
+function loading(){ render('<div class="empty">Loading…</div>'); }
+function fail(e){ render(`<div class="card"><h2>Couldn’t reach GitLab</h2><p class="desc">${esc(e.message)}</p><p class="hint">Check that the phone is on the company VPN, the address in Settings is right, and the token hasn’t expired.</p></div>`); }
+
+function push(fn, title){ stack.push({fn,title}); show(); }
+function show(){ const top=stack[stack.length-1]; setTitle(top.title); loading(); top.fn().catch(fail); }
+$('#back').onclick = () => { if(stack.length>1){ stack.pop(); show(); } };
+$('#refresh').onclick = () => stack.length && show();
+
+function switchTab(t){
+  tab = t; document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
+  if (!cfg.host || !cfg.token) t = 'settings';
+  stack = []; ({mrs:mrList, issues:issueList, projects:projectList, settings:settings})[t]();
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
+
+async function getMe(){ if(!me) me = await api('/user'); return me; }
+
+/* ---------- Merge requests ---------- */
+let mrScope = 'review';
+function mrList(){
+  push(async () => {
+    const u = await getMe();
+    const q = { review:`/merge_requests?scope=all&state=opened&reviewer_username=${encodeURIComponent(u.username)}`,
+                mine:'/merge_requests?scope=created_by_me&state=opened',
+                assigned:'/merge_requests?scope=assigned_to_me&state=opened' }[mrScope];
+    const mrs = await api(q + '&per_page=40&order_by=updated_at');
+    render(`<div class="seg">${[['review','To review'],['assigned','Assigned'],['mine','Mine']].map(([k,l])=>`<button data-s="${k}" class="${k===mrScope?'on':''}">${l}</button>`).join('')}</div>
+      ${mrs.length ? `<div class="list">${mrs.map(m=>`<button class="row" data-p="${m.project_id}" data-i="${m.iid}">
+        <div class="t">${esc(m.title)}</div>
+        <div class="m">${esc(m.references?.full || '!'+m.iid)} · ${esc(m.source_branch)} → ${esc(m.target_branch)} · ${ago(m.updated_at)}${m.draft?' · Draft':''}</div></button>`).join('')}</div>`
+        : '<div class="empty">Nothing here right now.</div>'}`);
+    document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ mrScope=b.dataset.s; show(); });
+    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>mrDetail(r.dataset.p, r.dataset.i));
+  }, 'Merge requests');
+}
+
+function mrDetail(pid, iid){
+  push(async () => {
+    const [m, notes, appr] = await Promise.all([
+      api(`/projects/${pid}/merge_requests/${iid}`),
+      api(`/projects/${pid}/merge_requests/${iid}/notes?sort=asc&per_page=50`),
+      api(`/projects/${pid}/merge_requests/${iid}/approvals`).catch(()=>null)
+    ]);
+    const pl = m.head_pipeline;
+    const approved = appr && appr.approved_by?.some(a => a.user.id === me.id);
+    render(`<div class="card">
+      <div><span class="pill s-${esc(m.state)}">${esc(m.state)}</span>${pl?`<span class="pill s-${esc(pl.status)}">pipeline ${esc(pl.status)}</span>`:''}</div>
+      <h2>${esc(m.title)}</h2>
+      <div class="hint">${esc(m.references?.full)} by ${esc(m.author?.name)} · ${esc(m.source_branch)} → ${esc(m.target_branch)}</div>
+      ${appr?`<div class="hint">Approvals: ${appr.approved_by.length}${appr.approvals_required?` of ${appr.approvals_required}`:''}</div>`:''}
+      <div class="actions">
+        ${m.state==='opened'?`<button class="btn ghost" id="appr">${approved?'Revoke approval':'Approve'}</button>
+        <button class="btn" id="merge">Merge</button>`:''}
+        ${pl?`<button class="btn ghost" id="pipe">Pipeline</button>`:''}
+        <button class="btn ghost" id="web">Open in browser</button>
+      </div>
+      ${m.description?`<div class="desc">${esc(m.description)}</div>`:''}
+    </div>
+    <div class="card"><b>Comments</b>
+      ${notes.filter(n=>!n.system).map(n=>`<div class="note"><b>${esc(n.author.name)}</b> <span class="hint">${ago(n.created_at)}</span><div class="desc">${esc(n.body)}</div></div>`).join('') || '<p class="hint">No comments yet.</p>'}
+      <label for="c">Add a comment</label><textarea id="c"></textarea>
+      <div class="actions"><button class="btn" id="post">Post comment</button></div>
+    </div>`);
+    $('#web').onclick = () => window.open(m.web_url, '_blank');
+    if ($('#pipe')) $('#pipe').onclick = () => pipelineDetail(pid, pl.id);
+    if ($('#appr')) $('#appr').onclick = async () => {
+      try { await api(`/projects/${pid}/merge_requests/${iid}/${approved?'unapprove':'approve'}`, {method:'POST'}); toast(approved?'Approval revoked':'Approved'); show(); } catch(e){ toast(e.message); } };
+    if ($('#merge')) $('#merge').onclick = async () => {
+      if (!confirm(`Merge ${m.source_branch} into ${m.target_branch}?`)) return;
+      try { await api(`/projects/${pid}/merge_requests/${iid}/merge`, {method:'PUT', body:{should_remove_source_branch: !!m.force_remove_source_branch}}); toast('Merged'); show(); } catch(e){ toast(e.message); } };
+    $('#post').onclick = async () => { const body=$('#c').value.trim(); if(!body) return;
+      try { await api(`/projects/${pid}/merge_requests/${iid}/notes`, {method:'POST', body:{body}}); toast('Comment posted'); show(); } catch(e){ toast(e.message); } };
+  }, '!' + iid);
+}
+
+/* ---------- Pipelines ---------- */
+function pipelineList(pid, name){
+  push(async () => {
+    const ps = await api(`/projects/${pid}/pipelines?per_page=30`);
+    render(`<div class="actions"><button class="btn" id="run">Run pipeline</button></div>
+      ${ps.length?`<div class="list">${ps.map(p=>`<button class="row" data-id="${p.id}"><div class="t"><span class="pill s-${esc(p.status)}">${esc(p.status)}</span>#${p.id}</div><div class="m">${esc(p.ref)} · ${esc(p.sha.slice(0,8))} · ${ago(p.updated_at)}</div></button>`).join('')}</div>`:'<div class="empty">No pipelines yet.</div>'}`);
+    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>pipelineDetail(pid, r.dataset.id));
+    $('#run').onclick = async () => { const ref = prompt('Branch or tag to run on', 'main'); if(!ref) return;
+      try { const p = await api(`/projects/${pid}/pipeline`, {method:'POST', body:{ref}}); toast('Pipeline started'); pipelineDetail(pid, p.id); } catch(e){ toast(e.message); } };
+  }, 'Pipelines · ' + name);
+}
+
+function pipelineDetail(pid, plid){
+  push(async () => {
+    const [p, jobs] = await Promise.all([api(`/projects/${pid}/pipelines/${plid}`), api(`/projects/${pid}/pipelines/${plid}/jobs?per_page=100`)]);
+    const stages = [...new Set(jobs.map(j=>j.stage))];
+    render(`<div class="card"><span class="pill s-${esc(p.status)}">${esc(p.status)}</span><h2>Pipeline #${p.id}</h2>
+      <div class="hint">${esc(p.ref)} · ${esc(p.sha.slice(0,8))} · ${ago(p.updated_at)}</div>
+      <div class="actions"><button class="btn ghost" id="retry">Retry failed</button><button class="btn danger" id="cancel">Cancel</button><button class="btn ghost" id="web">Open in browser</button></div></div>
+      ${stages.map(s=>`<p class="hint" style="margin:14px 4px 6px">${esc(s)}</p><div class="list">${jobs.filter(j=>j.stage===s).reverse().map(j=>`<button class="row" data-j="${j.id}" data-st="${esc(j.status)}"><div class="t"><span class="pill s-${esc(j.status)}">${esc(j.status)}</span>${esc(j.name)}</div>${j.duration?`<div class="m">${Math.round(j.duration)}s</div>`:''}</button>`).join('')}</div>`).join('')}`);
+    $('#web').onclick = () => window.open(p.web_url, '_blank');
+    $('#retry').onclick = async () => { try{ await api(`/projects/${pid}/pipelines/${plid}/retry`,{method:'POST'}); toast('Retrying'); show(); }catch(e){ toast(e.message); } };
+    $('#cancel').onclick = async () => { if(!confirm('Cancel this pipeline?'))return; try{ await api(`/projects/${pid}/pipelines/${plid}/cancel`,{method:'POST'}); toast('Canceled'); show(); }catch(e){ toast(e.message); } };
+    document.querySelectorAll('.row[data-j]').forEach(r=>r.onclick=()=>jobLog(pid, r.dataset.j, r.dataset.st));
+  }, 'Pipeline #' + plid);
+}
+
+function jobLog(pid, jid, status){
+  push(async () => {
+    const res = await fetch(cfg.host.replace(/\/$/,'') + `/api/v4/projects/${pid}/jobs/${jid}/trace`, {headers:{'PRIVATE-TOKEN':cfg.token}});
+    const txt = res.ok ? (await res.text()).replace(/\x1b\[[0-9;]*m/g,'').replace(/section_(start|end):\d+:\S+\r?/g,'') : 'No log available.';
+    render(`<div class="actions">${['failed','canceled','success'].includes(status)?'<button class="btn ghost" id="retry">Retry job</button>':''}${status==='manual'?'<button class="btn" id="play">Run job</button>':''}</div>
+      <div class="card"><div class="desc" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;overflow-x:auto;white-space:pre">${esc(txt.slice(-30000))}</div></div>`);
+    if($('#retry')) $('#retry').onclick = async()=>{ try{ await api(`/projects/${pid}/jobs/${jid}/retry`,{method:'POST'}); toast('Job retried'); }catch(e){ toast(e.message); } };
+    if($('#play')) $('#play').onclick = async()=>{ try{ await api(`/projects/${pid}/jobs/${jid}/play`,{method:'POST'}); toast('Job started'); }catch(e){ toast(e.message); } };
+  }, 'Job log');
+}
+
+/* ---------- Issues ---------- */
+function issueList(){
+  push(async () => {
+    const is = await api('/issues?scope=assigned_to_me&state=opened&per_page=40&order_by=updated_at');
+    render(is.length?`<div class="list">${is.map(i=>`<button class="row" data-p="${i.project_id}" data-i="${i.iid}"><div class="t">${esc(i.title)}</div><div class="m">${esc(i.references?.full)} · ${ago(i.updated_at)}${i.labels.length?' · '+esc(i.labels.join(', ')):''}</div></button>`).join('')}</div>`:'<div class="empty">No open issues assigned to you.</div>');
+    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>issueDetail(r.dataset.p, r.dataset.i));
+  }, 'My issues');
+}
+
+function issueDetail(pid, iid){
+  push(async () => {
+    const [i, notes] = await Promise.all([api(`/projects/${pid}/issues/${iid}`), api(`/projects/${pid}/issues/${iid}/notes?sort=asc&per_page=50`)]);
+    render(`<div class="card"><span class="pill s-${esc(i.state)}">${esc(i.state)}</span><h2>${esc(i.title)}</h2>
+      <div class="hint">${esc(i.references?.full)} by ${esc(i.author?.name)}</div>
+      <div class="actions"><button class="btn ghost" id="toggle">${i.state==='opened'?'Close issue':'Reopen issue'}</button><button class="btn ghost" id="web">Open in browser</button></div>
+      ${i.description?`<div class="desc">${esc(i.description)}</div>`:''}</div>
+      <div class="card"><b>Comments</b>${notes.filter(n=>!n.system).map(n=>`<div class="note"><b>${esc(n.author.name)}</b> <span class="hint">${ago(n.created_at)}</span><div class="desc">${esc(n.body)}</div></div>`).join('')||'<p class="hint">No comments yet.</p>'}
+      <label for="c">Add a comment</label><textarea id="c"></textarea><div class="actions"><button class="btn" id="post">Post comment</button></div></div>`);
+    $('#web').onclick = () => window.open(i.web_url,'_blank');
+    $('#toggle').onclick = async () => { try{ await api(`/projects/${pid}/issues/${iid}`,{method:'PUT',body:{state_event:i.state==='opened'?'close':'reopen'}}); toast(i.state==='opened'?'Issue closed':'Issue reopened'); show(); }catch(e){ toast(e.message); } };
+    $('#post').onclick = async () => { const body=$('#c').value.trim(); if(!body)return; try{ await api(`/projects/${pid}/issues/${iid}/notes`,{method:'POST',body:{body}}); toast('Comment posted'); show(); }catch(e){ toast(e.message); } };
+  }, '#' + iid);
+}
+
+function newIssue(pid, name){
+  push(async () => {
+    render(`<div class="card"><label for="t">Title</label><input id="t"><label for="d">Description</label><textarea id="d"></textarea>
+      <label for="l">Labels (comma-separated)</label><input id="l"><div class="actions"><button class="btn" id="create">Create issue</button></div></div>`);
+    $('#create').onclick = async () => { const title=$('#t').value.trim(); if(!title){ toast('Add a title first'); return; }
+      try{ const i = await api(`/projects/${pid}/issues`,{method:'POST',body:{title, description:$('#d').value, labels:$('#l').value}}); toast('Issue created'); stack.pop(); issueDetail(pid, i.iid); }catch(e){ toast(e.message); } };
+  }, 'New issue · ' + name);
+}
+
+/* ---------- Projects ---------- */
+function projectList(){
+  push(async () => {
+    const ps = await api('/projects?membership=true&simple=true&order_by=last_activity_at&per_page=50');
+    render(`<input class="search" id="f" placeholder="Filter projects" type="search">
+      <div class="list" id="pl">${ps.map(p=>`<button class="row" data-id="${p.id}" data-n="${esc(p.path_with_namespace)}"><div class="t">${esc(p.name)}</div><div class="m">${esc(p.path_with_namespace)} · ${ago(p.last_activity_at)}</div></button>`).join('')}</div>`);
+    $('#f').oninput = e => { const q=e.target.value.toLowerCase(); document.querySelectorAll('#pl .row').forEach(r=>r.hidden=!r.dataset.n.toLowerCase().includes(q)); };
+    document.querySelectorAll('#pl .row').forEach(r=>r.onclick=()=>projectDetail(r.dataset.id, r.dataset.n));
+  }, 'Projects');
+}
+
+function projectDetail(pid, name){
+  push(async () => {
+    const [p, commits] = await Promise.all([api(`/projects/${pid}`), api(`/projects/${pid}/repository/commits?per_page=15`)]);
+    render(`<div class="card"><h2>${esc(p.name)}</h2><div class="hint">${esc(p.path_with_namespace)} · default branch ${esc(p.default_branch)}</div>
+      <div class="actions"><button class="btn" id="pipes">Pipelines</button><button class="btn ghost" id="mrs">Open MRs</button><button class="btn ghost" id="ni">New issue</button></div></div>
+      <p class="hint" style="margin:14px 4px 6px">Recent commits</p>
+      <div class="list">${commits.map(c=>`<div class="row"><div class="t">${esc(c.title)}</div><div class="m">${esc(c.short_id)} · ${esc(c.author_name)} · ${ago(c.created_at)}</div></div>`).join('')}</div>`);
+    $('#pipes').onclick = () => pipelineList(pid, p.name);
+    $('#ni').onclick = () => newIssue(pid, p.name);
+    $('#mrs').onclick = () => push(async () => {
+      const mrs = await api(`/projects/${pid}/merge_requests?state=opened&per_page=40`);
+      render(mrs.length?`<div class="list">${mrs.map(m=>`<button class="row" data-i="${m.iid}"><div class="t">${esc(m.title)}</div><div class="m">!${m.iid} · ${esc(m.author.name)} · ${ago(m.updated_at)}</div></button>`).join('')}</div>`:'<div class="empty">No open merge requests.</div>');
+      document.querySelectorAll('.row').forEach(r=>r.onclick=()=>mrDetail(pid, r.dataset.i));
+    }, 'MRs · ' + p.name);
+  }, name.split('/').pop());
+}
+
+/* ---------- Settings ---------- */
+function settings(){
+  push(async () => {
+    render(`<div class="card"><h2>Connect to GitLab</h2>
+      <label for="h">GitLab address</label><input id="h" type="url" inputmode="url" placeholder="https://gitlab.yourcompany.com" value="${esc(cfg.host)}">
+      <label for="k">Personal access token</label><input id="k" type="password" autocomplete="off" placeholder="glpat-…" value="${esc(cfg.token)}">
+      <p class="hint">Scopes needed: <b>api</b> (read and write). The token stays on this phone only and is sent straight to your GitLab server, nowhere else.</p>
+      <div class="actions"><button class="btn" id="save">Save and test</button>${cfg.token?'<button class="btn danger" id="out">Remove token</button>':''}</div>
+      <p id="st" class="hint"></p></div>`);
+    $('#save').onclick = async () => {
+      cfg.host = $('#h').value.trim().replace(/\/$/,''); cfg.token = $('#k').value.trim(); me = null;
+      $('#st').textContent = 'Testing…';
+      try { const u = await getMe(); store.set('gl_host', cfg.host); store.set('gl_token', cfg.token);
+        $('#st').textContent = `Connected as ${u.name} (@${u.username}).`; toast('Connected'); }
+      catch(e){ $('#st').textContent = 'Couldn’t connect: ' + e.message + '. Is the VPN on?'; }
+    };
+    if ($('#out')) $('#out').onclick = () => { store.del('gl_token'); cfg.token=''; me=null; toast('Token removed'); show(); };
+  }, 'Settings');
+}
+
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+switchTab(cfg.host && cfg.token ? 'mrs' : 'settings');
+</script>
+</body>
+</html>

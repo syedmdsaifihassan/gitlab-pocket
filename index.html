@@ -3,300 +3,959 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1f2433">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1f1e24" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="GitLab">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" id="mf" href="manifest.webmanifest">
+<link rel="icon" id="fav" href="icons/classic.svg">
+<link rel="apple-touch-icon" id="ati" href="icons/classic-180.png">
+<script>
+/* Pick the app icon before the browser reads the manifest. ?icon=name in the URL also sets it (used to reinstall with a new icon). */
+(function(){try{var q=new URLSearchParams(location.search).get('icon');if(q&&/^[a-z]+$/.test(q))localStorage.setItem('app_icon',q);
+var k=localStorage.getItem('app_icon');if(k&&/^[a-z]+$/.test(k)){document.getElementById('mf').href='manifest-'+k+'.webmanifest';document.getElementById('fav').href='icons/'+k+'.svg';document.getElementById('ati').href='icons/'+k+'-180.png';}}catch(e){}})();
+</script>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all'">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.3.0/marked.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
 <title>GitLab Pocket</title>
 <style>
 :root{
-  --ink:#1f2433; --paper:#f4f5f8; --surface:#ffffff; --line:#e1e4ec; --muted:#6b7285;
-  --accent:#5b4fe0; --accent-ink:#ffffff; --ok:#1f9d6b; --bad:#d64545; --warn:#b67d08; --run:#2f7fd6;
-  --bar:#1f2433; --bar-ink:#e9ebf2;
-  color-scheme: light;
+  --bg:#fbfafd;--surface:#fff;--subtle:#f5f5f7;--hover:#ececef;--line:#dcdcde;--line-soft:#ececef;
+  --text:#333238;--strong:#1f1e24;--muted:#626168;
+  --blue:#1f75cb;--blue-d:#1068bf;--blue-bg:#e9f3fc;--green:#108548;--green-bg:#c3e6cd;
+  --red:#dd2b0e;--red-bg:#fdd4cd;--orange:#ab6100;--orange-bg:#f5d9a8;--purple:#6e49cb;--purple-bg:#e1d8f9;--neutral-bg:#ececef;
+  --add:#ecfdf0;--add-ln:#ddfbe6;--del:#fbe9eb;--del-ln:#f9d7dc;--hunk:#f0f0f6;--code-bg:#f5f5f7;--log:#1f1e24;
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --ink:#e9ebf2; --paper:#12151d; --surface:#1b1f2a; --line:#2a3040; --muted:#9097aa;
-    --accent:#8a80f5; --accent-ink:#12151d; --ok:#3fc48c; --bad:#f07070; --warn:#e2a93a; --run:#5ea6f0;
-    --bar:#0d1016; --bar-ink:#e9ebf2; color-scheme: dark;
-  }
-}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#18171d;--surface:#1f1e24;--subtle:#28272d;--hover:#333238;--line:#434248;--line-soft:#333238;
+  --text:#ececef;--strong:#fff;--muted:#a4a3a8;
+  --blue:#63a6e9;--blue-d:#428fdc;--blue-bg:#0b2a4a;--green:#52b87a;--green-bg:#0d4026;--red:#f57f6c;--red-bg:#5a1408;
+  --orange:#e9be74;--orange-bg:#4a3108;--purple:#ac93e6;--purple-bg:#2f2a6b;--neutral-bg:#333238;
+  --add:#10291b;--add-ln:#143523;--del:#361512;--del-ln:#471a16;--hunk:#25242c;--code-bg:#28272d;--log:#0e0e12;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#18171d;--surface:#1f1e24;--subtle:#28272d;--hover:#333238;--line:#434248;--line-soft:#333238;
+  --text:#ececef;--strong:#fff;--muted:#a4a3a8;
+  --blue:#63a6e9;--blue-d:#428fdc;--blue-bg:#0b2a4a;--green:#52b87a;--green-bg:#0d4026;--red:#f57f6c;--red-bg:#5a1408;
+  --orange:#e9be74;--orange-bg:#4a3108;--purple:#ac93e6;--purple-bg:#2f2a6b;--neutral-bg:#333238;
+  --add:#10291b;--add-ln:#143523;--del:#361512;--del-ln:#471a16;--hunk:#25242c;--code-bg:#28272d;--log:#0e0e12;color-scheme:dark}
 *{box-sizing:border-box}
-html{height:100%}
-body{margin:0;min-height:100%;background:var(--paper);color:var(--ink);
-  font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
-  -webkit-tap-highlight-color:transparent;padding-bottom:calc(68px + env(safe-area-inset-bottom,0px))}
-header{position:sticky;top:0;z-index:5;background:var(--bar);color:var(--bar-ink);
-  padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 12px;display:flex;align-items:center;gap:10px}
-header h1{font-size:19px;font-weight:650;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-header button{background:none;border:0;color:var(--bar-ink);font-size:16px;padding:6px 4px}
-main{padding:12px 12px 24px;max-width:720px;margin:0 auto}
-nav{position:fixed;bottom:0;left:0;right:0;z-index:5;display:flex;background:var(--surface);
-  border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
-nav button{flex:1;background:none;border:0;color:var(--muted);padding:9px 0 8px;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:3px}
-nav button svg{width:23px;height:23px}
-nav button.on{color:var(--accent)}
-.seg{display:flex;background:var(--line);border-radius:10px;padding:3px;margin-bottom:12px}
-.seg button{flex:1;border:0;background:none;padding:7px 4px;border-radius:8px;font-size:14px;color:var(--ink)}
-.seg button.on{background:var(--surface);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.list{background:var(--surface);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
-.row{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:12px 14px;color:var(--ink);font:inherit}
-.row:last-child{border-bottom:0}
-.row .t{font-weight:600;font-size:15.5px}
-.row .m{color:var(--muted);font-size:13px;margin-top:2px}
-.pill{display:inline-block;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid currentColor;margin-right:6px}
-.s-success{color:var(--ok)} .s-failed{color:var(--bad)} .s-running,.s-pending,.s-created{color:var(--run)} .s-canceled,.s-skipped,.s-manual{color:var(--muted)} .s-merged{color:var(--accent)} .s-opened{color:var(--ok)} .s-closed{color:var(--bad)}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
-.card h2{font-size:18px;margin:0 0 6px;line-height:1.3}
-.desc{white-space:pre-wrap;word-break:break-word;font-size:14.5px}
-.actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
-.btn{border:0;border-radius:10px;padding:11px 16px;font:inherit;font-weight:600;background:var(--accent);color:var(--accent-ink)}
-.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--accent)}
-.btn.danger{background:transparent;color:var(--bad);border:1px solid var(--bad)}
-.btn:disabled{opacity:.5}
-label{display:block;font-size:14px;font-weight:600;margin:12px 0 5px}
-input,textarea,select{width:100%;font:inherit;font-size:16px;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
-textarea{min-height:90px;resize:vertical}
-.hint{color:var(--muted);font-size:13px}
-.note{border-top:1px solid var(--line);padding:10px 0}
-.note b{font-size:14px}
-.empty{padding:28px 16px;text-align:center;color:var(--muted)}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--paper);padding:10px 16px;border-radius:10px;font-size:14px;z-index:9;max-width:90%}
-.search{margin-bottom:12px}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,"GitLab Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))}
+button{font:inherit;color:inherit}
+a{color:var(--blue);text-decoration:none}
+.top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);
+  padding:env(safe-area-inset-top,0px) 4px 0;display:flex;align-items:center;min-height:calc(52px + env(safe-area-inset-top,0px))}
+.ttl{flex:1;min-width:0;padding:6px 6px}
+#ttl{font-weight:600;font-size:16px;color:var(--strong);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#sub{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{background:none;border:0;width:42px;height:42px;display:grid;place-items:center;border-radius:6px;color:var(--text);flex:none}
+.icon-btn:active{background:var(--hover)}
+svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none;vertical-align:-3px}
+#nav{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+#nav a{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:7px 0 6px;color:var(--muted);font-size:11px;font-weight:500;position:relative}
+#nav a svg.i{width:22px;height:22px}
+#nav a.on{color:var(--blue)}
+.nbadge{position:absolute;top:3px;left:calc(50% + 6px);background:var(--blue);color:#fff;font-size:10px;font-weight:700;border-radius:9px;min-width:17px;height:17px;padding:0 4px;display:grid;place-items:center}
+main{max-width:860px;margin:0 auto}
+.loading{display:grid;place-items:center;padding:60px 0}
+.spinner{width:24px;height:24px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--blue);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.spinner{animation-duration:3s}}
+.tabs{display:flex;overflow-x:auto;background:var(--surface);border-bottom:1px solid var(--line);scrollbar-width:none;position:sticky;top:calc(52px + env(safe-area-inset-top,0px));z-index:10}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:none;background:none;border:0;padding:12px 14px 10px;color:var(--muted);font-weight:500;border-bottom:2px solid transparent;white-space:nowrap}
+.tabs button.on{color:var(--strong);font-weight:600;border-bottom-color:var(--blue)}
+.count{display:inline-block;background:var(--neutral-bg);color:var(--muted);border-radius:9px;font-size:12px;padding:0 7px;margin-left:6px;font-weight:500}
+.list{background:var(--surface);border-bottom:1px solid var(--line)}
+.item{display:flex;gap:12px;padding:12px 16px;border-top:1px solid var(--line-soft);align-items:flex-start;cursor:pointer}
+.item:first-child{border-top:0}
+.item:active{background:var(--subtle)}
+.grow{flex:1;min-width:0}
+.title{font-weight:600;color:var(--strong);word-break:break-word;line-height:1.35}
+.meta{font-size:13px;color:var(--muted);word-break:break-word}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none}
+.nowrap{white-space:nowrap}
+.section-h{display:flex;align-items:center;gap:8px;padding:16px 16px 8px;font-weight:600;color:var(--strong)}
+.section-h .meta{font-weight:400}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px 16px}
+.toolbar .grow{min-width:0}
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;line-height:1;padding:4px 8px;border-radius:999px;white-space:nowrap;vertical-align:1px}
+.b-ok{background:var(--green-bg);color:var(--green)}.b-bad{background:var(--red-bg);color:var(--red)}
+.b-merged{background:var(--purple-bg);color:var(--purple)}.b-info{background:var(--blue-bg);color:var(--blue)}
+.b-warn{background:var(--orange-bg);color:var(--orange)}.b-neutral{background:var(--neutral-bg);color:var(--muted)}
+.labels{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.label{display:inline-block;font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--lc,var(--neutral-bg));color:var(--lt,var(--text));white-space:nowrap;border:1px solid transparent}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:38px;padding:8px 14px;border-radius:4px;border:1px solid var(--line);background:var(--surface);color:var(--text);font-weight:500;font-size:14px;cursor:pointer;white-space:nowrap}
+.btn:active{background:var(--hover)}
+.btn.confirm{background:var(--blue);border-color:var(--blue-d);color:#fff}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn.danger-o{color:var(--red);border-color:var(--red)}
+.btn.sm{min-height:32px;padding:5px 10px;font-size:13px}
+.btn.tertiary{border-color:transparent;background:transparent}
+.btn:disabled{opacity:.55;pointer-events:none}
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.btns.center{justify-content:center}
+.link{background:none;border:0;padding:0;color:var(--blue);font-size:13px;cursor:pointer}
+.link.danger{color:var(--red)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin:12px;overflow:hidden}
+.card-h{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--line-soft);font-weight:600;color:var(--strong);background:var(--subtle)}
+.card-h .grow{font-weight:600}
+.card-b{padding:12px 14px}
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-t{font-weight:600;font-size:16px;color:var(--strong);margin-bottom:4px}
+.av{position:relative;display:inline-grid;place-items:center;border-radius:50%;overflow:hidden;font-weight:600;flex:none;vertical-align:middle}
+.av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:var(--surface)}
+.av0{background:#fcf1ef;color:#8f2110}.av1{background:#f4f0ff;color:#5943b6}.av2{background:#f1f1ff;color:#3434a6}
+.av3{background:#e9f3fc;color:#0b5cad}.av4{background:#ecf4ee;color:#24663b}.av5{background:#fdf1dd;color:#8a5c00}
+.av.sq{border-radius:6px}
+.avs{display:inline-flex}.avs .av{margin-left:-6px;box-shadow:0 0 0 2px var(--surface)}.avs .av:first-child{margin-left:0}
+.ci{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;flex:none;vertical-align:-4px}
+.ci svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.ci-ok{color:var(--green)}.ci-bad{color:var(--red)}.ci-warn{color:var(--orange)}.ci-neutral{color:var(--muted)}
+.ci-run{color:var(--blue);background:conic-gradient(currentColor 0 50%,transparent 50% 100%)}
+.ci-none{color:var(--line)}
+.page-h{background:var(--surface);border-bottom:1px solid var(--line);padding:14px 16px}
+.page-h h1{font-size:20px;line-height:1.3;margin:8px 0 6px;color:var(--strong);word-break:break-word}
+.branch{display:inline-block;font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--blue-bg);color:var(--blue);border:0;border-radius:4px;padding:1px 6px;word-break:break-all;cursor:pointer}
+.md{word-break:break-word;overflow-wrap:anywhere;font-size:15px}
+.md>:first-child{margin-top:0}.md>:last-child{margin-bottom:0}
+.md p,.md ul,.md ol,.md pre,.md blockquote,.md table{margin:0 0 10px}
+.md h1,.md h2,.md h3,.md h4{color:var(--strong);margin:16px 0 8px;line-height:1.3}
+.md h1{font-size:20px;border-bottom:1px solid var(--line);padding-bottom:6px}.md h2{font-size:18px;border-bottom:1px solid var(--line);padding-bottom:4px}.md h3{font-size:16px}
+.md code{font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--code-bg);padding:1px 4px;border-radius:4px}
+.md pre{background:var(--code-bg);border:1px solid var(--line-soft);padding:10px;border-radius:4px;overflow-x:auto}
+.md pre code{background:none;padding:0;white-space:pre}
+.md blockquote{border-left:3px solid var(--line);padding-left:12px;color:var(--muted)}
+.md img{max-width:100%}
+.md table{border-collapse:collapse;display:block;overflow-x:auto}
+.md th,.md td{border:1px solid var(--line);padding:4px 8px}
+.md ul,.md ol{padding-left:22px}
+.md li>input[type=checkbox]{margin-right:6px}
+.md.pre{white-space:pre-wrap}
+.details .drow{display:flex;gap:12px;padding:10px 14px;border-top:1px solid var(--line-soft)}
+.details .drow:first-child{border-top:0}
+.details .dk{width:92px;flex:none;color:var(--muted);font-size:13px;padding-top:2px}
+.details .dv{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px}
+.person{display:inline-flex;align-items:center;gap:6px;margin-right:6px}
+.w-row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border-top:1px solid var(--line-soft)}
+.w-row:first-child{border-top:0}
+.w-row .ic{padding-top:1px}
+.w-row b{color:var(--strong);font-weight:600}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:14px;margin:8px 0}
+.check input{width:18px;height:18px;margin:1px 0 0;flex:none;accent-color:var(--blue)}
+.disc{background:var(--surface);border:1px solid var(--line);border-radius:6px;margin:0 12px 12px;overflow:hidden}
+.disc.pending{border-color:var(--orange)}
+.disc-where{font-size:12px;color:var(--muted);padding:8px 14px;background:var(--subtle);border-bottom:1px solid var(--line-soft);display:flex;gap:6px;align-items:center;word-break:break-all}
+.disc-resolved{display:flex;gap:8px;align-items:center;font-size:13px;color:var(--muted);padding:9px 14px;background:var(--subtle);cursor:pointer}
+.disc.resolved:not(.open) .note,.disc.resolved:not(.open) .disc-f{display:none}
+.note{display:flex;gap:10px;padding:12px 14px}
+.note+.note{border-top:1px solid var(--line-soft)}
+.note-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;margin-bottom:4px}
+.note-h b{color:var(--strong)}
+.note-acts{margin-left:auto;display:flex;gap:12px}
+.disc-f{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--line-soft);background:var(--subtle);flex-wrap:wrap;align-items:flex-start}
+.disc-f .ed{flex-basis:100%}
+.fake-input{flex:1;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:6px 10px;color:var(--muted);min-height:32px;min-width:140px;cursor:text}
+.sys{display:flex;gap:8px;align-items:flex-start;padding:6px 16px 6px 22px;font-size:13px;color:var(--muted)}
+.sys b{color:var(--text);font-weight:600}
+.sys .md{font-size:13px;display:inline}.sys .md p{display:inline;margin:0}.sys .md ul{margin:4px 0 0;padding-left:18px}
+.ed{border:1px solid var(--line);border-radius:4px;background:var(--surface);overflow:hidden}
+.ed:focus-within{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+.ed-tabs{display:flex;border-bottom:1px solid var(--line-soft);background:var(--subtle)}
+.ed-tabs button{background:none;border:0;padding:7px 12px;font-size:13px;color:var(--muted);border-bottom:2px solid transparent}
+.ed-tabs button.on{color:var(--strong);font-weight:600;border-bottom-color:var(--blue)}
+.ed textarea{display:block;width:100%;border:0;outline:0;min-height:110px;padding:10px;font:16px/1.45 inherit;font-family:inherit;background:var(--surface);color:var(--text);resize:vertical}
+.ed-prev{padding:10px;min-height:110px}
+.ed-hint{font-size:12px;color:var(--muted);padding:5px 10px;border-top:1px solid var(--line-soft)}
+.form{padding:4px 16px 24px}
+.field{margin:16px 0}
+.field>label{display:flex;align-items:center;gap:10px;font-weight:600;font-size:14px;margin-bottom:6px;color:var(--strong)}
+.field>label .link{font-weight:400;margin-left:auto}
+input[type=text],input[type=search],input[type=url],input[type=password],input[type=date],select{width:100%;font:16px inherit;font-family:inherit;padding:9px 11px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);min-height:42px}
+input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-bg)}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.searchbar{padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line-soft)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
+.chips:empty{display:none}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--subtle);border:1px solid var(--line);border-radius:999px;padding:2px 4px 2px 3px;font-size:13px}
+.chip button{background:none;border:0;width:22px;height:22px;border-radius:50%;color:var(--muted);font-size:16px;line-height:1}
+.pick-res{border:1px solid var(--line);border-radius:4px;margin-top:4px;overflow:hidden}
+.pick-res:empty{display:none}
+.pick-item{display:flex;gap:8px;align-items:center;width:100%;text-align:left;background:var(--surface);border:0;border-top:1px solid var(--line-soft);padding:9px 10px}
+.pick-item:first-child{border-top:0}
+.label-pick{display:flex;flex-wrap:wrap;gap:6px}
+.label-pick .label{background:transparent;color:var(--text);border-color:var(--lc,var(--line));padding:5px 10px;cursor:pointer;font-size:13px}
+.label-pick .label.on{background:var(--lc);color:var(--lt)}
+.diff-sum{display:flex;gap:10px;align-items:center;padding:12px 16px;font-size:14px;font-weight:600;color:var(--strong)}
+.adds{color:var(--green);font-weight:600;font-size:13px}.dels{color:var(--red);font-weight:600;font-size:13px}
+.file{background:var(--surface);border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:10px}
+.file-h{display:flex;width:100%;gap:8px;align-items:center;background:var(--subtle);border:0;padding:10px 12px;text-align:left;position:sticky;top:calc(96px + env(safe-area-inset-top,0px));z-index:5;border-bottom:1px solid var(--line-soft)}
+.file-h .path{flex:1;min-width:0;font:13px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;word-break:break-all;color:var(--strong)}
+.chev{display:inline-grid;transition:transform .15s}.chev.open{transform:rotate(90deg)}
+table.diff{width:100%;border-collapse:collapse;table-layout:fixed;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+table.diff td{padding:0 6px;vertical-align:top}
+table.diff td.ln{width:38px;text-align:right;color:var(--muted);user-select:none;font-size:11px;padding:0 4px}
+table.diff td.code{white-space:pre-wrap;word-break:break-all}
+.sg{display:inline-block;width:12px;color:var(--muted);user-select:none}
+tr.add td{background:var(--add)}tr.add td.ln{background:var(--add-ln)}
+tr.del td{background:var(--del)}tr.del td.ln{background:var(--del-ln)}
+tr.hunk td{background:var(--hunk);color:var(--muted);padding:4px 6px}
+tr.dl{cursor:pointer}
+tr.tr-thread td,tr.tr-form td{padding:8px 0;background:var(--bg);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;white-space:normal;word-break:normal}
+tr.tr-thread .disc{margin:0 8px}
+.inline-form{padding:0 8px}
+.nodiff{padding:16px;color:var(--muted);font-size:14px}
+.review-bar{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom,0px));z-index:15;display:flex;gap:12px;align-items:center;background:var(--surface);border-top:2px solid var(--orange);padding:10px 16px;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+.review-bar .grow b{color:var(--strong)}
+.rb-space{height:70px}
+.crumbs{padding:10px 16px;font-size:14px;background:var(--surface);border-bottom:1px solid var(--line-soft);word-break:break-all}
+.crumbs a{font-weight:500}
+.code-view{font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;counter-reset:ln}
+.code-view div{white-space:pre-wrap;word-break:break-all;padding-left:52px;position:relative}
+.code-view div::before{counter-increment:ln;content:counter(ln);position:absolute;left:0;width:40px;text-align:right;color:var(--muted)}
+.log{background:var(--log);color:#e4e4e8;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:12px;white-space:pre-wrap;word-break:break-all;min-height:200px}
+.stage{padding:14px 16px 6px;font-size:13px;font-weight:600;color:var(--muted)}
+.day{padding:12px 16px 6px;font-size:13px;font-weight:600;color:var(--muted);background:var(--bg)}
+.sha{font:12px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:var(--subtle);border:1px solid var(--line);border-radius:4px;padding:1px 6px;color:var(--text)}
+.sheet-wrap{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.4);display:flex;align-items:flex-end}
+.sheet{background:var(--surface);width:100%;border-radius:12px 12px 0 0;padding:8px 0 calc(8px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow:auto}
+.sheet-btn{display:block;width:100%;background:none;border:0;text-align:left;padding:14px 20px;font-size:16px;color:var(--strong)}
+.sheet-btn:active{background:var(--hover)}
+.sheet-btn.danger{color:var(--red)}
+.sheet-btn.cancel{color:var(--muted);border-top:1px solid var(--line-soft);margin-top:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));background:var(--strong);color:var(--surface);padding:10px 16px;border-radius:6px;font-size:14px;z-index:60;max-width:90%;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.nav-row{display:flex;gap:12px;align-items:center;padding:13px 16px;border-top:1px solid var(--line-soft);cursor:pointer;color:var(--text)}
+.nav-row:first-child{border-top:0}
+.nav-row .grow{font-weight:500}
+.seg-sm{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.seg-sm button{background:var(--surface);border:0;padding:5px 10px;font-size:13px;color:var(--muted)}
+.seg-sm button.on{background:var(--subtle);color:var(--strong);font-weight:600}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.icon-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.icon-opt{background:none;border:0;padding:0;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--muted);cursor:pointer}
+.icon-opt img{width:100%;max-width:68px;aspect-ratio:1;border-radius:22%;box-shadow:0 0 0 1px var(--line)}
+.icon-opt.on img{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--blue)}
+.icon-opt.on span{color:var(--strong);font-weight:600}
+.howto{background:var(--subtle);border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-top:12px;font-size:14px}
+.howto ol{margin:6px 0 0;padding-left:20px}
 </style>
 </head>
 <body>
-<header><button id="back" hidden aria-label="Back">‹ Back</button><h1 id="title">GitLab</h1><button id="refresh" aria-label="Refresh">↻</button></header>
+<header class="top">
+  <button id="back" class="icon-btn" aria-label="Back" hidden><svg class="i" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+  <div class="ttl"><div id="ttl">GitLab</div><div id="sub" hidden></div></div>
+  <button id="refresh" class="icon-btn" aria-label="Refresh"><svg class="i" viewBox="0 0 24 24"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg></button>
+  <button id="more" class="icon-btn" aria-label="More actions" hidden><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/></svg></button>
+</header>
 <main id="view"></main>
-<nav id="tabs">
-  <button data-tab="mrs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-4"/></svg>Merge requests</button>
-  <button data-tab="issues"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/></svg>Issues</button>
-  <button data-tab="projects"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 7h7l2 2h9v10H3z"/></svg>Projects</button>
-  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Settings</button>
+<nav id="nav">
+  <a href="#/" data-k=""><svg class="i" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>To-Do<span class="nbadge" id="todo-badge" hidden></span></a>
+  <a href="#/mrs/review" data-k="mrs"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-4"/><path d="m13 5-2 2 2 2"/></svg>MRs</a>
+  <a href="#/issues/assigned" data-k="issues"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2"/></svg>Issues</a>
+  <a href="#/projects/yours" data-k="projects"><svg class="i" viewBox="0 0 24 24"><path d="M3.5 6.5h6l2 2h9v10h-17z"/></svg>Projects</a>
+  <a href="#/settings" data-k="settings"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a>
 </nav>
 <script>
-const $ = s => document.querySelector(s);
+'use strict';
+/* ================= Core helpers ================= */
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const enc = encodeURIComponent;
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ago = d => { const s=(Date.now()-new Date(d))/1000; if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; };
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+function ago(d){ if(!d) return ''; const s=(Date.now()-new Date(d))/1000;
+  if(s<60) return 'just now'; if(s<3600) return Math.floor(s/60)+' min ago'; if(s<86400) return plural(Math.floor(s/3600),'hour')+' ago';
+  if(s<2592000) return plural(Math.floor(s/86400),'day')+' ago'; return new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}); }
+const dur = s => { if(s==null) return ''; s=Math.round(s); return s<60 ? s+'s' : Math.floor(s/60)+'m '+(s%60)+'s'; };
 const store = { get(k){try{return localStorage.getItem(k)}catch{return null}}, set(k,v){try{localStorage.setItem(k,v)}catch{}}, del(k){try{localStorage.removeItem(k)}catch{}} };
 let cfg = { host: store.get('gl_host') || '', token: store.get('gl_token') || '' };
-let me = null, stack = [], tab = 'mrs';
+let me = null, navId = 0, acts = {}, inputs = {}, menuItems = null, lastTab = '', CUR = {}, DS = null;
+const projCache = {}, openSets = {};
+const baseUrl = () => cfg.host.replace(/\/+$/, '');
 
-function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.textContent=msg; document.body.append(t); setTimeout(()=>t.remove(),2600); }
+function toast(msg){ const t=document.createElement('div'); t.className='toast'; t.setAttribute('role','status'); t.textContent=msg; document.body.append(t); setTimeout(()=>t.remove(),2800); }
+function openExt(u){ window.open(u, '_blank', 'noopener'); }
+function go(h){ location.hash = h.replace(/^#/, ''); }
 
-async function api(path, opts={}){
-  const res = await fetch(cfg.host.replace(/\/$/,'') + '/api/v4' + path, {
-    method: opts.method || 'GET',
-    headers: { 'PRIVATE-TOKEN': cfg.token, ...(opts.body ? {'Content-Type':'application/json'} : {}) },
-    body: opts.body ? JSON.stringify(opts.body) : undefined
+async function api(path, { method = 'GET', body, raw } = {}){
+  const res = await fetch(baseUrl() + '/api/v4' + path, { method,
+    headers: { 'PRIVATE-TOKEN': cfg.token, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined });
+  if (!res.ok) {
+    let msg = '';
+    try { const j = await res.json(); msg = j.message || j.error || '';
+      if (typeof msg !== 'string') msg = Array.isArray(msg) ? msg.join(', ') : Object.entries(msg).map(([k,v]) => `${k} ${[].concat(v).join(', ')}`).join('; '); } catch {}
+    const e = new Error(msg || ('HTTP ' + res.status)); e.status = res.status; throw e;
+  }
+  if (raw) return res.text();
+  if (res.status === 204) return null;
+  const t = await res.text(); return t ? JSON.parse(t) : null;
+}
+async function all(path, maxPages = 5){
+  const sep = path.includes('?') ? '&' : '?'; let out = [];
+  for (let p = 1; p <= maxPages; p++) { const r = await api(`${path}${sep}per_page=100&page=${p}`); out = out.concat(r || []); if (!r || r.length < 100) break; }
+  return out;
+}
+async function getMe(){ if (!me) me = await api('/user'); return me; }
+async function proj(pid){ if (!projCache[pid]) projCache[pid] = await api('/projects/' + enc(pid)); return projCache[pid]; }
+function errMsg(e){ return !e.status ? 'Can’t reach GitLab. Is the VPN on?' : e.status === 401 ? 'Token rejected. Check it in Settings.' : e.status === 403 ? 'You don’t have permission to do that.' : e.message; }
+async function busy(el, fn, ok){
+  if (el) { if (el.disabled) return false; el.disabled = true; }
+  try { await fn(); if (ok) toast(ok); return true; } catch (e) { toast(errMsg(e)); return false; }
+  finally { if (el && el.isConnected) el.disabled = false; }
+}
+function sheet(items){
+  const o = document.createElement('div'); o.className = 'sheet-wrap';
+  o.innerHTML = `<div class="sheet" role="menu">${items.map((it,i)=>`<button class="sheet-btn ${it.danger?'danger':''}" data-i="${i}">${esc(it.label)}</button>`).join('')}<button class="sheet-btn cancel" data-i="-1">Cancel</button></div>`;
+  o.addEventListener('click', e => { const b = e.target.closest('[data-i]'); if (e.target === o || b) { e.stopPropagation(); o.remove(); if (b && +b.dataset.i >= 0) items[+b.dataset.i].fn(); } });
+  document.body.append(o);
+}
+
+/* ================= Rendering helpers ================= */
+const IC = {
+  branch:'<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9c0 5-7 4-11 8"/>',
+  comment:'<path d="M4 5h16v11H9l-5 4z"/>', chev:'<path d="m9 6 6 6-6 6"/>', file:'<path d="M6 3h8l5 5v13H6z"/><path d="M14 3v5h5"/>',
+  folder:'<path d="M3.5 6.5h6l2 2h9v10h-17z"/>', commit:'<circle cx="12" cy="12" r="3.5"/><path d="M3 12h5.5M15.5 12H21"/>',
+  pipeline:'<circle cx="5" cy="12" r="2.2"/><circle cx="12" cy="12" r="2.2"/><circle cx="19" cy="12" r="2.2"/><path d="M7.2 12h2.6M14.2 12h2.6"/>',
+  mr:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M6 8.5v7M18 15.5V10a3 3 0 0 0-3-3h-4"/>',
+  issue:'<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2"/>', check:'<path d="m5 12 5 5 9-10"/>',
+  approve:'<circle cx="12" cy="12" r="8.5"/><path d="m8.5 12 2.5 2.5 4.5-5"/>', merge:'<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="12" r="2.5"/><path d="M6 8.5v7M8 7.5c3 3 6 4.5 7.5 4.5"/>',
+  ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v6H4V6h6"/>', copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4H4v12h4"/>',
+  plus:'<path d="M12 5v14M5 12h14"/>', retry:'<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>', play:'<path d="M8 5v14l11-7z"/>',
+  stop:'<rect x="6" y="6" width="12" height="12" rx="1"/>', lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+  warn:'<path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/>', label:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.3"/>',
+  user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>', clock:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 2"/>'
+};
+const ic = (n, s = 18) => `<svg class="i" viewBox="0 0 24 24" style="width:${s}px;height:${s}px" aria-hidden="true">${IC[n]||''}</svg>`;
+function av(u, s = 24, sq = false){
+  if (!u) return '';
+  const n = u.name || u.username || '?';
+  const init = n.split(/\s+/).filter(Boolean).map(x => x[0]).slice(0, sq ? 1 : 2).join('').toUpperCase();
+  let h = 0; for (const c of n) h = (h * 31 + c.charCodeAt(0)) | 0;
+  let src = u.avatar_url || ''; if (src.startsWith('/')) src = baseUrl() + src;
+  return `<span class="av av${Math.abs(h)%6}${sq?' sq':''}" style="width:${s}px;height:${s}px;font-size:${Math.round(s*.42)}px" title="${esc(n)}">${esc(init)}${src?`<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
+}
+const CI = { success:['ok','<path d="m5 12 5 5 9-10"/>'], failed:['bad','<path d="M6 6l12 12M18 6 6 18"/>'], running:['run',''],
+  pending:['warn','<path d="M9 7v10M15 7v10"/>'], created:['neutral',''], waiting_for_resource:['warn','<path d="M9 7v10M15 7v10"/>'],
+  preparing:['warn','<path d="M9 7v10M15 7v10"/>'], scheduled:['neutral','<path d="M12 7v5l3 2"/>'], canceled:['neutral','<path d="M6 18 18 6"/>'],
+  skipped:['neutral','<path d="m6 6 6 6-6 6M13 6l6 6-6 6"/>'], manual:['neutral','<path d="M8 5v14l11-7z"/>'] };
+const ciText = s => ({success:'passed',failed:'failed',running:'running',pending:'pending',canceled:'canceled',skipped:'skipped',manual:'manual action',created:'created',scheduled:'scheduled',waiting_for_resource:'waiting',preparing:'preparing'}[s] || s);
+const ci = s => { const [c, g] = CI[s] || ['neutral','']; return `<span class="ci ci-${c}" title="${esc(ciText(s))}" role="img" aria-label="${esc(ciText(s))}">${g?`<svg viewBox="0 0 24 24">${g}</svg>`:''}</span>`; };
+const stateBadge = s => { const [l, c] = ({opened:['Open','ok'],merged:['Merged','merged'],closed:['Closed','bad'],locked:['Locked','neutral']})[s] || [s,'neutral']; return `<span class="badge b-${c}">${esc(l)}</span>`; };
+function labelsHtml(ls){
+  if (!ls || !ls.length) return '';
+  return `<div class="labels">${ls.map(l => typeof l === 'string' ? `<span class="label">${esc(l)}</span>` : `<span class="label" style="--lc:${esc(l.color)};--lt:${esc(l.text_color)}">${esc(l.name)}</span>`).join('')}</div>`;
+}
+const empty = (t, s = '') => `<div class="empty"><div class="empty-t">${esc(t)}</div>${s?`<p>${esc(s)}</p>`:''}</div>`;
+const tabs = (items, active) => `<div class="tabs" role="tablist">${items.map(i => `<button role="tab" aria-selected="${i.k===active}" class="${i.k===active?'on':''}" data-act="tab" data-h="${esc(i.h)}">${esc(i.label)}${i.count!=null?`<span class="count">${esc(i.count)}</span>`:''}</button>`).join('')}</div>`;
+function md(text, pr){
+  if (!text) return '';
+  if (window.marked && window.DOMPurify) {
+    let h = DOMPurify.sanitize(marked.parse(text, { gfm: true, breaks: true, mangle: false, headerIds: false }));
+    if (pr) h = h.replace(/(src|href)="\/uploads\//g, `$1="${pr.web_url}/uploads/`);
+    h = h.replace(/(src|href)="\/(?!\/)/g, `$1="${baseUrl()}/`);
+    return `<div class="md">${h}</div>`;
+  }
+  return `<div class="md pre">${esc(text)}</div>`;
+}
+let edSeq = 0;
+function editor(val = '', ph = 'Write a comment…', id){
+  id = id || 'ed' + (++edSeq);
+  return `<div class="ed" id="${id}"><div class="ed-tabs"><button type="button" class="on" data-act="edtab" data-m="w">Write</button><button type="button" data-act="edtab" data-m="p">Preview</button></div><textarea placeholder="${esc(ph)}" aria-label="${esc(ph)}">${esc(val)}</textarea><div class="ed-prev" hidden></div><div class="ed-hint">Supports Markdown and quick actions like /assign_reviewer</div></div>`;
+}
+const edVal = root => { const t = root && $('textarea', root); return t ? t.value.trim() : ''; };
+const DRAFT_RE = /^\s*(\[draft\]|\(draft\)|draft:|draft\s+-|draft\b)\s*/i;
+const setDraft = (t, on) => { const c = t.replace(DRAFT_RE, ''); return on ? 'Draft: ' + c : c; };
+function person(u){ return `<span class="person">${av(u,22)}<span>${esc(u.name)}</span></span>`; }
+
+/* ================= Diff helpers ================= */
+function parseDiff(txt){
+  const rows = []; let o = 0, n = 0; const lines = txt.split('\n'); if (lines[lines.length-1] === '') lines.pop();
+  for (const l of lines) {
+    if (l.startsWith('@@')) { const m = /@@ -(\d+)(?:,\d+)? \+(\d+)/.exec(l); if (m) { o = +m[1]; n = +m[2]; } rows.push({ t:'hunk', s:l }); }
+    else if (l.startsWith('+')) rows.push({ t:'add', s:l.slice(1), n:n++ });
+    else if (l.startsWith('-')) rows.push({ t:'del', s:l.slice(1), o:o++ });
+    else if (l.startsWith('\\')) {}
+    else rows.push({ t:'ctx', s:l.slice(1), o:o++, n:n++ });
+  }
+  return rows;
+}
+const threadKey = pos => pos.new_line ? `${pos.new_path}|n${pos.new_line}` : `${pos.old_path}|o${pos.old_line}`;
+function filesHtml(files, opts){
+  const parsed = files.map(f => { const rows = parseDiff(f.diff || ''); let a = 0, d = 0; for (const r of rows) { if (r.t === 'add') a++; else if (r.t === 'del') d++; } return { f, rows, a, d }; });
+  let set = openSets[opts.key];
+  if (!set) { set = openSets[opts.key] = new Set(); parsed.forEach((x, i) => { if (x.rows.length <= 500 && i < 20) set.add(i); }); }
+  DS = { ...opts, parsed, set, tmap: opts.tmap || {} };
+  const A = parsed.reduce((s, x) => s + x.a, 0), D = parsed.reduce((s, x) => s + x.d, 0);
+  return `<div class="diff-sum"><span class="grow">${plural(parsed.length,'file')} changed</span><span class="adds">+${A}</span><span class="dels">−${D}</span></div>` +
+    parsed.map((x, i) => { const open = set.has(i); const path = x.f.renamed_file ? `${x.f.old_path} → ${x.f.new_path}` : x.f.new_path;
+      return `<div class="file" id="file-${i}"><button class="file-h" data-act="file" data-i="${i}" aria-expanded="${open}"><span class="chev ${open?'open':''}">${ic('chev',14)}</span><span class="path">${esc(path)}</span>${x.f.new_file?'<span class="badge b-ok">new</span>':''}${x.f.deleted_file?'<span class="badge b-bad">deleted</span>':''}<span class="adds">+${x.a}</span><span class="dels">−${x.d}</span></button><div class="file-b"${open?'':' hidden'}>${open?diffTable(i):''}</div></div>`; }).join('');
+}
+function diffTable(i){
+  const x = DS.parsed[i];
+  if (!x.rows.length) return `<div class="nodiff">${x.f.too_large || x.f.collapsed ? 'This diff is too large to show here.' : 'No text changes to show (binary file or permissions change).'}</div>`;
+  let h = '<table class="diff">';
+  x.rows.forEach((r, ri) => {
+    if (r.t === 'hunk') { h += `<tr class="hunk"><td class="ln"></td><td class="ln"></td><td class="code">${esc(r.s)}</td></tr>`; return; }
+    h += `<tr class="dl ${r.t}"${DS.comment ? ` data-act="line" data-f="${i}" data-r="${ri}"` : ''}><td class="ln">${r.o ?? ''}</td><td class="ln">${r.n ?? ''}</td><td class="code"><span class="sg">${r.t==='add'?'+':r.t==='del'?'−':' '}</span>${esc(r.s)}</td></tr>`;
+    const k = r.t === 'del' ? `${x.f.old_path}|o${r.o}` : `${x.f.new_path}|n${r.n}`;
+    for (const it of (DS.tmap[k] || [])) h += `<tr class="tr-thread"><td colspan="3">${it.d ? discHtml(it.d) : draftHtml(it.draft)}</td></tr>`;
   });
-  if (!res.ok) { let m=''; try{ const j=await res.json(); m=j.message||j.error||''; if(typeof m!=='string') m=JSON.stringify(m);}catch{} throw new Error(res.status + (m ? ': ' + m : '')); }
-  return res.status === 204 ? null : res.json();
+  return h + '</table>';
 }
 
-function setTitle(t){ $('#title').textContent = t; $('#back').hidden = stack.length < 2; }
-function render(html){ $('#view').innerHTML = html; window.scrollTo(0,0); }
-function loading(){ render('<div class="empty">Loading…</div>'); }
-function fail(e){ render(`<div class="card"><h2>Couldn’t reach GitLab</h2><p class="desc">${esc(e.message)}</p><p class="hint">Check that the phone is on the company VPN, the address in Settings is right, and the token hasn’t expired.</p></div>`); }
-
-function push(fn, title){ stack.push({fn,title}); show(); }
-function show(){ const top=stack[stack.length-1]; setTitle(top.title); loading(); top.fn().catch(fail); }
-$('#back').onclick = () => { if(stack.length>1){ stack.pop(); show(); } };
-$('#refresh').onclick = () => stack.length && show();
-
-function switchTab(t){
-  tab = t; document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on', b.dataset.tab===t));
-  if (!cfg.host || !cfg.token) t = 'settings';
-  stack = []; ({mrs:mrList, issues:issueList, projects:projectList, settings:settings})[t]();
+/* ================= Discussions ================= */
+function noteHtml(n){
+  const own = me && n.author && n.author.id === me.id;
+  return `<div class="note" id="note-${n.id}">${av(n.author,32)}<div class="grow"><div class="note-h"><b>${esc(n.author.name)}</b><span class="meta">@${esc(n.author.username)} · ${ago(n.created_at)}${n.last_edited_at?' · edited':''}</span>${own?`<span class="note-acts"><button class="link" data-act="editnote" data-n="${n.id}">Edit</button><button class="link danger" data-act="delnote" data-n="${n.id}">Delete</button></span>`:''}</div><div class="note-b" data-raw="${esc(n.body)}">${md(n.body, CUR.pr)}</div></div></div>`;
 }
-document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => switchTab(b.dataset.tab));
-
-async function getMe(){ if(!me) me = await api('/user'); return me; }
-
-/* ---------- Merge requests ---------- */
-let mrScope = 'review';
-function mrList(){
-  push(async () => {
-    const u = await getMe();
-    const q = { review:`/merge_requests?scope=all&state=opened&reviewer_username=${encodeURIComponent(u.username)}`,
-                mine:'/merge_requests?scope=created_by_me&state=opened',
-                assigned:'/merge_requests?scope=assigned_to_me&state=opened' }[mrScope];
-    const mrs = await api(q + '&per_page=40&order_by=updated_at');
-    render(`<div class="seg">${[['review','To review'],['assigned','Assigned'],['mine','Mine']].map(([k,l])=>`<button data-s="${k}" class="${k===mrScope?'on':''}">${l}</button>`).join('')}</div>
-      ${mrs.length ? `<div class="list">${mrs.map(m=>`<button class="row" data-p="${m.project_id}" data-i="${m.iid}">
-        <div class="t">${esc(m.title)}</div>
-        <div class="m">${esc(m.references?.full || '!'+m.iid)} · ${esc(m.source_branch)} → ${esc(m.target_branch)} · ${ago(m.updated_at)}${m.draft?' · Draft':''}</div></button>`).join('')}</div>`
-        : '<div class="empty">Nothing here right now.</div>'}`);
-    document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{ mrScope=b.dataset.s; show(); });
-    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>mrDetail(r.dataset.p, r.dataset.i));
-  }, 'Merge requests');
+function sysHtml(n){ return `<div class="sys">${av(n.author,20)}<div class="grow"><b>${esc(n.author.name)}</b> ${md(n.body, CUR.pr)} <span>· ${ago(n.created_at)}</span></div></div>`; }
+function discHtml(d){
+  const first = d.notes[0];
+  if (d.individual_note && first.system) return sysHtml(first);
+  const resolvable = d.notes.some(n => n.resolvable);
+  const resolved = resolvable && d.notes.every(n => !n.resolvable || n.resolved);
+  const pos = first.position;
+  const where = pos && (pos.new_line || pos.old_line) ? `<div class="disc-where"${CUR.isMr?` data-act="tab" data-h="#/p/${CUR.pid}/mr/${CUR.iid}/changes"`:''}>${ic('file',14)} ${esc(pos.new_path || pos.old_path)} · line ${pos.new_line || pos.old_line}</div>` : '';
+  const resolver = d.notes.find(n => n.resolved_by)?.resolved_by;
+  return `<div class="disc${resolved?' resolved':''}" id="d-${d.id}">${where}${resolved?`<div class="disc-resolved" data-act="dtoggle">${ic('check',14)}<span class="grow">Thread resolved${resolver?' by '+esc(resolver.name):''} · ${plural(d.notes.length,'comment')}</span><span class="link">Show</span></div>`:''}${d.notes.filter(n => !n.system).map(noteHtml).join('')}<div class="disc-f" id="df-${d.id}"><button class="fake-input" data-act="reply" data-d="${d.id}">Reply…</button>${resolvable?`<button class="btn sm" data-act="resolve" data-d="${d.id}" data-v="${resolved?'false':'true'}">${resolved?'Unresolve thread':'Resolve thread'}</button>`:''}</div></div>`;
+}
+function draftHtml(dn){
+  const pos = dn.position && (dn.position.new_line || dn.position.old_line) ? dn.position : null;
+  return `<div class="disc pending"><div class="disc-where">${ic('comment',14)} ${pos ? esc((pos.new_path||pos.old_path) + ' · line ' + (pos.new_line||pos.old_line)) : dn.discussion_id ? 'Reply in a thread' : 'General comment'}</div><div class="note">${av(me,32)}<div class="grow"><div class="note-h"><b>${esc(me.name)}</b><span class="badge b-warn">Pending</span><span class="note-acts"><button class="link danger" data-act="deldraft" data-id="${dn.id}">Delete</button></span></div>${md(dn.note, CUR.pr)}</div></div></div>`;
+}
+let actFilter = 'all';
+function activityHtml(discs){
+  const list = actFilter === 'comments' ? discs.filter(d => !(d.individual_note && d.notes[0].system)) : discs;
+  const open = discs.filter(d => d.notes.some(n => n.resolvable) && !d.notes.every(n => !n.resolvable || n.resolved)).length;
+  return `<div class="section-h"><span class="grow">Activity${open?` <span class="badge b-warn">${plural(open,'unresolved thread')}</span>`:''}</span><span class="seg-sm"><button class="${actFilter==='all'?'on':''}" data-act="filter" data-v="all">All</button><button class="${actFilter==='comments'?'on':''}" data-act="filter" data-v="comments">Comments</button></span></div>` +
+    (list.length ? list.map(discHtml).join('') : '<p class="meta" style="padding:0 16px">No activity yet.</p>');
 }
 
-function mrDetail(pid, iid){
-  push(async () => {
-    const [m, notes, appr] = await Promise.all([
-      api(`/projects/${pid}/merge_requests/${iid}`),
-      api(`/projects/${pid}/merge_requests/${iid}/notes?sort=asc&per_page=50`),
-      api(`/projects/${pid}/merge_requests/${iid}/approvals`).catch(()=>null)
+/* ================= Global actions ================= */
+const gacts = {
+  tab: el => location.replace(el.dataset.h),
+  retry: () => route(),
+  copy: el => navigator.clipboard?.writeText(el.dataset.v).then(() => toast('Copied to clipboard'), () => toast('Couldn’t copy')),
+  edtab(el){ const ed = el.closest('.ed'); $$('.ed-tabs button', ed).forEach(b => b.classList.toggle('on', b === el)); const p = el.dataset.m === 'p';
+    $('textarea', ed).hidden = p; const pv = $('.ed-prev', ed); pv.hidden = !p; if (p) pv.innerHTML = md($('textarea', ed).value, CUR.pr) || '<span class="meta">Nothing to preview.</span>'; },
+  dtoggle: el => el.closest('.disc').classList.toggle('open'),
+  filter: el => { actFilter = el.dataset.v; reload(); },
+  file(el){ const i = +el.dataset.i, b = el.nextElementSibling, open = b.hidden; b.hidden = !open; el.setAttribute('aria-expanded', open); $('.chev', el).classList.toggle('open', open);
+    if (open) { DS.set.add(i); if (!b.innerHTML) b.innerHTML = diffTable(i); } else DS.set.delete(i); },
+  line(el){
+    let after = el; while (after.nextElementSibling?.classList.contains('tr-thread')) after = after.nextElementSibling;
+    if (after.nextElementSibling?.classList.contains('tr-form')) { $('textarea', after.nextElementSibling).focus(); return; }
+    const tr = document.createElement('tr'); tr.className = 'tr-form'; tr.dataset.f = el.dataset.f; tr.dataset.r = el.dataset.r;
+    const hd = (DS.drafts || []).length > 0;
+    tr.innerHTML = `<td colspan="3"><div class="inline-form">${editor('', 'Add a comment on this line…')}<div class="btns"><button class="btn confirm sm" data-act="lsend" data-mode="draft">${hd?'Add to review':'Start a review'}</button><button class="btn sm" data-act="lsend" data-mode="now">Add comment now</button><button class="btn sm tertiary" data-act="lcancel">Cancel</button></div></div></td>`;
+    after.after(tr); $('textarea', tr).focus();
+  },
+  lcancel: el => el.closest('.tr-form').remove(),
+  async lsend(el){
+    const tr = el.closest('.tr-form'), body = edVal(tr); if (!body) return toast('Write a comment first');
+    const x = DS.parsed[+tr.dataset.f], r = x.rows[+tr.dataset.r], dr = DS.diffRefs;
+    if (!dr) return toast('This merge request has no diff info yet. Refresh and try again.');
+    const pos = { position_type:'text', base_sha:dr.base_sha, start_sha:dr.start_sha, head_sha:dr.head_sha, old_path:x.f.old_path, new_path:x.f.new_path };
+    if (r.t !== 'del') pos.new_line = r.n; if (r.t !== 'add') pos.old_line = r.o;
+    const draft = el.dataset.mode === 'draft';
+    await busy(el, async () => { await api(`${CUR.B}/${draft?'draft_notes':'discussions'}`, { method:'POST', body: draft ? { note:body, position:pos } : { body, position:pos } }); await reload(); }, draft ? 'Added to your review' : 'Comment added');
+  },
+  reply(el){ const f = $('#df-' + el.dataset.d); f.dataset.orig = f.innerHTML;
+    f.innerHTML = editor('', 'Reply…') + `<div class="btns"><button class="btn confirm sm" data-act="sendreply" data-d="${el.dataset.d}" data-mode="now">Reply</button>${CUR.isMr?`<button class="btn sm" data-act="sendreply" data-d="${el.dataset.d}" data-mode="draft">Add to review</button>`:''}<button class="btn sm tertiary" data-act="cancelreply">Cancel</button></div>`;
+    $('textarea', f).focus(); },
+  cancelreply: el => { const f = el.closest('.disc-f'); f.innerHTML = f.dataset.orig; },
+  async sendreply(el){ const f = el.closest('.disc-f'), body = edVal(f); if (!body) return toast('Write a reply first'); const d = el.dataset.d, draft = el.dataset.mode === 'draft';
+    await busy(el, async () => { if (draft) await api(`${CUR.B}/draft_notes`, { method:'POST', body:{ note:body, in_reply_to_discussion_id:d } }); else await api(`${CUR.B}/discussions/${d}/notes`, { method:'POST', body:{ body } }); await reload(); }, draft ? 'Added to your review' : 'Reply posted'); },
+  resolve: el => busy(el, async () => { await api(`${CUR.B}/discussions/${el.dataset.d}?resolved=${el.dataset.v}`, { method:'PUT' }); await reload(); }, el.dataset.v === 'true' ? 'Thread resolved' : 'Thread reopened'),
+  editnote(el){ const b = $(`#note-${el.dataset.n} .note-b`); b.dataset.html = b.innerHTML;
+    b.innerHTML = editor(b.dataset.raw, 'Edit comment') + `<div class="btns"><button class="btn confirm sm" data-act="savenote" data-n="${el.dataset.n}">Save comment</button><button class="btn sm tertiary" data-act="cancelnote" data-n="${el.dataset.n}">Cancel</button></div>`; },
+  cancelnote: el => { const b = $(`#note-${el.dataset.n} .note-b`); b.innerHTML = b.dataset.html; },
+  savenote(el){ const b = $(`#note-${el.dataset.n} .note-b`), body = edVal(b); if (!body) return toast('Comment can’t be empty');
+    return busy(el, async () => { await api(`${CUR.B}/notes/${el.dataset.n}`, { method:'PUT', body:{ body } }); await reload(); }, 'Comment updated'); },
+  delnote(el){ if (!confirm('Delete this comment?')) return; return busy(el, async () => { await api(`${CUR.B}/notes/${el.dataset.n}`, { method:'DELETE' }); await reload(); }, 'Comment deleted'); },
+  deldraft(el){ return busy(el, async () => { await api(`${CUR.B}/draft_notes/${el.dataset.id}`, { method:'DELETE' }); await reload(); }, 'Pending comment deleted'); },
+  submitreview(){
+    const publish = async () => { await api(`${CUR.B}/draft_notes/bulk_publish`, { method:'POST' }); };
+    sheet([
+      { label:'Submit review', fn: () => busy(null, async () => { await publish(); await reload(); }, 'Review submitted') },
+      { label:'Approve and submit review', fn: () => busy(null, async () => { await api(`${CUR.B}/approve`, { method:'POST' }).catch(e => { if (e.status !== 401 && e.status !== 409) throw e; }); await publish(); await reload(); }, 'Approved and submitted') },
+      { label:'Discard review', danger:true, fn: () => { if (!confirm('Delete all your pending comments?')) return; busy(null, async () => { for (const d of CUR.drafts) await api(`${CUR.B}/draft_notes/${d.id}`, { method:'DELETE' }); await reload(); }, 'Review discarded'); } }
     ]);
-    const pl = m.head_pipeline;
-    const approved = appr && appr.approved_by?.some(a => a.user.id === me.id);
-    render(`<div class="card">
-      <div><span class="pill s-${esc(m.state)}">${esc(m.state)}</span>${pl?`<span class="pill s-${esc(pl.status)}">pipeline ${esc(pl.status)}</span>`:''}</div>
-      <h2>${esc(m.title)}</h2>
-      <div class="hint">${esc(m.references?.full)} by ${esc(m.author?.name)} · ${esc(m.source_branch)} → ${esc(m.target_branch)}</div>
-      ${appr?`<div class="hint">Approvals: ${appr.approved_by.length}${appr.approvals_required?` of ${appr.approvals_required}`:''}</div>`:''}
-      <div class="actions">
-        ${m.state==='opened'?`<button class="btn ghost" id="appr">${approved?'Revoke approval':'Approve'}</button>
-        <button class="btn" id="merge">Merge</button>`:''}
-        ${pl?`<button class="btn ghost" id="pipe">Pipeline</button>`:''}
-        <button class="btn ghost" id="web">Open in browser</button>
-      </div>
-      ${m.description?`<div class="desc">${esc(m.description)}</div>`:''}
-    </div>
-    <div class="card"><b>Comments</b>
-      ${notes.filter(n=>!n.system).map(n=>`<div class="note"><b>${esc(n.author.name)}</b> <span class="hint">${ago(n.created_at)}</span><div class="desc">${esc(n.body)}</div></div>`).join('') || '<p class="hint">No comments yet.</p>'}
-      <label for="c">Add a comment</label><textarea id="c"></textarea>
-      <div class="actions"><button class="btn" id="post">Post comment</button></div>
-    </div>`);
-    $('#web').onclick = () => window.open(m.web_url, '_blank');
-    if ($('#pipe')) $('#pipe').onclick = () => pipelineDetail(pid, pl.id);
-    if ($('#appr')) $('#appr').onclick = async () => {
-      try { await api(`/projects/${pid}/merge_requests/${iid}/${approved?'unapprove':'approve'}`, {method:'POST'}); toast(approved?'Approval revoked':'Approved'); show(); } catch(e){ toast(e.message); } };
-    if ($('#merge')) $('#merge').onclick = async () => {
-      if (!confirm(`Merge ${m.source_branch} into ${m.target_branch}?`)) return;
-      try { await api(`/projects/${pid}/merge_requests/${iid}/merge`, {method:'PUT', body:{should_remove_source_branch: !!m.force_remove_source_branch}}); toast('Merged'); show(); } catch(e){ toast(e.message); } };
-    $('#post').onclick = async () => { const body=$('#c').value.trim(); if(!body) return;
-      try { await api(`/projects/${pid}/merge_requests/${iid}/notes`, {method:'POST', body:{body}}); toast('Comment posted'); show(); } catch(e){ toast(e.message); } };
-  }, '!' + iid);
+  },
+  async cmt(el){ const ed = $('#new-cmt'), body = edVal(ed); if (!body) return toast('Write a comment first');
+    const mode = el.dataset.mode;
+    await busy(el, async () => {
+      if (mode === 'draft') await api(`${CUR.B}/draft_notes`, { method:'POST', body:{ note:body } });
+      else await api(`${CUR.B}/${mode === 'thread' ? 'discussions' : 'notes'}`, { method:'POST', body:{ body } });
+      if (mode === 'close' || mode === 'reopen') await api(CUR.B, { method:'PUT', body:{ state_event: mode } });
+      await reload(); window.scrollTo(0, document.body.scrollHeight);
+    }, mode === 'draft' ? 'Added to your review' : 'Comment posted'); },
+  /* pickers */
+  pick(el){ const k = el.dataset.k, u = PICK.res[el.dataset.id]; if (u && !PICK[k].some(x => x.id === u.id)) PICK[k].push(u);
+    $('#pc-' + k).innerHTML = chipsHtml(k); $('#pr-' + k).innerHTML = ''; const inp = $(`[data-pick="${k}"]`); inp.value = ''; },
+  unpick(el){ const k = el.dataset.k; PICK[k] = PICK[k].filter(x => x.id !== +el.dataset.id); $('#pc-' + k).innerHTML = chipsHtml(k); },
+  assignme(){ if (!PICK.assignees.some(x => x.id === me.id)) PICK.assignees.push(me); $('#pc-assignees').innerHTML = chipsHtml('assignees'); },
+  lbl(el){ const v = el.dataset.v; if (PICK.labels.has(v)) PICK.labels.delete(v); else PICK.labels.add(v); el.classList.toggle('on', PICK.labels.has(v)); el.setAttribute('aria-pressed', PICK.labels.has(v)); }
+};
+const PICK = { assignees: [], reviewers: [], labels: new Set(), res: {}, pid: null };
+function chipsHtml(k){ return PICK[k].map(u => `<span class="chip">${av(u,20)}${esc(u.name)}<button type="button" data-act="unpick" data-k="${k}" data-id="${u.id}" aria-label="Remove ${esc(u.name)}">×</button></span>`).join(''); }
+const picker = k => `<div class="picker"><div class="chips" id="pc-${k}">${chipsHtml(k)}</div><input type="search" placeholder="Search people" data-pick="${k}" autocomplete="off" aria-label="Search people"><div class="pick-res" id="pr-${k}"></div></div>`;
+let pickTimer;
+async function pickSearch(el){
+  const k = el.dataset.pick, q = el.value.trim(); clearTimeout(pickTimer);
+  if (!q) { $('#pr-' + k).innerHTML = ''; return; }
+  pickTimer = setTimeout(async () => {
+    try { const us = await api(`/projects/${PICK.pid}/members/all?query=${enc(q)}&per_page=10`);
+      us.forEach(u => PICK.res[u.id] = u);
+      $('#pr-' + k).innerHTML = us.length ? us.map(u => `<button type="button" class="pick-item" data-act="pick" data-k="${k}" data-id="${u.id}">${av(u,24)}<span class="grow"><b>${esc(u.name)}</b> <span class="meta">@${esc(u.username)}</span></span></button>`).join('') : '<div class="pick-item meta">No matching members</div>';
+    } catch (e) { toast(errMsg(e)); }
+  }, 250);
 }
 
-/* ---------- Pipelines ---------- */
-function pipelineList(pid, name){
-  push(async () => {
-    const ps = await api(`/projects/${pid}/pipelines?per_page=30`);
-    render(`<div class="actions"><button class="btn" id="run">Run pipeline</button></div>
-      ${ps.length?`<div class="list">${ps.map(p=>`<button class="row" data-id="${p.id}"><div class="t"><span class="pill s-${esc(p.status)}">${esc(p.status)}</span>#${p.id}</div><div class="m">${esc(p.ref)} · ${esc(p.sha.slice(0,8))} · ${ago(p.updated_at)}</div></button>`).join('')}</div>`:'<div class="empty">No pipelines yet.</div>'}`);
-    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>pipelineDetail(pid, r.dataset.id));
-    $('#run').onclick = async () => { const ref = prompt('Branch or tag to run on', 'main'); if(!ref) return;
-      try { const p = await api(`/projects/${pid}/pipeline`, {method:'POST', body:{ref}}); toast('Pipeline started'); pipelineDetail(pid, p.id); } catch(e){ toast(e.message); } };
-  }, 'Pipelines · ' + name);
+/* ================= Router ================= */
+const routes = [
+  ['', vHome], ['mrs/:scope', vMrs], ['mrs', vMrs], ['issues/:scope', vIssues], ['issues', vIssues],
+  ['projects/:scope', vProjects], ['projects', vProjects], ['settings', vSettings],
+  ['p/:pid', vProject], ['p/:pid/tree/:ref/*path', vTree], ['p/:pid/blob/:ref/*path', vBlob],
+  ['p/:pid/branches', vBranches], ['p/:pid/commits/:ref', vCommits], ['p/:pid/commit/:sha', vCommit],
+  ['p/:pid/mrs/:state', vProjectMrs], ['p/:pid/mr/new/:source', vMrForm], ['p/:pid/mr/new', vMrForm],
+  ['p/:pid/mr/:iid/edit', vMrForm], ['p/:pid/mr/:iid/:tab', vMr], ['p/:pid/mr/:iid', vMr],
+  ['p/:pid/issues/:state', vProjectIssues], ['p/:pid/issue/new', vIssueForm], ['p/:pid/issue/:iid/edit', vIssueForm], ['p/:pid/issue/:iid', vIssue],
+  ['p/:pid/pipelines', vPipelines], ['p/:pid/pipeline/:id', vPipeline], ['p/:pid/job/:id', vJob]
+];
+function match(pat, parts){
+  const pp = pat ? pat.split('/') : [], params = {};
+  for (let i = 0; i < pp.length; i++) {
+    const p = pp[i];
+    if (p[0] === '*') { params[p.slice(1)] = parts.slice(i).join('/'); return params; }
+    if (i >= parts.length) return null;
+    if (p[0] === ':') params[p.slice(1)] = parts[i]; else if (p !== parts[i]) return null;
+  }
+  return parts.length === pp.length ? params : null;
+}
+function head(t, sub = '', menu = null){ $('#ttl').textContent = t; const s = $('#sub'); s.textContent = sub; s.hidden = !sub; menuItems = menu; $('#more').hidden = !menu; document.title = t + ' · GitLab'; }
+function errHtml(e){
+  const net = !e.status;
+  return `<div class="empty"><div class="empty-t">${net?'Can’t reach GitLab':e.status===401?'Your token was rejected':e.status===404?'Not found':'Something went wrong'}</div><p>${esc(net?'Check that this phone is connected to the company VPN, then try again.':e.status===401?'It may have expired or been revoked. Add a new token in Settings.':e.message)}</p><div class="btns center"><button class="btn" data-act="retry">Try again</button>${e.status===401?'<a class="btn confirm" href="#/settings">Open Settings</a>':''}</div></div>`;
+}
+async function route(keep = false){
+  const y = window.scrollY, id = ++navId; acts = {}; inputs = {};
+  const parts = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean).map(decodeURIComponent);
+  if ((!cfg.host || !cfg.token) && parts[0] !== 'settings') { location.replace('#/settings'); return; }
+  let fn = vHome, params = {};
+  for (const [pat, f] of routes) { const m = match(pat, parts); if (m) { fn = f; params = m; break; } }
+  if (parts[0] !== 'p') lastTab = parts[0] || '';
+  $$('#nav a').forEach(a => a.classList.toggle('on', a.dataset.k === lastTab));
+  $('#back').hidden = parts[0] !== 'p';
+  if (!keep) { $('#view').innerHTML = '<div class="loading"><span class="spinner" role="status" aria-label="Loading"></span></div>'; window.scrollTo(0, 0); }
+  const R = h => { if (id !== navId) return false; $('#view').innerHTML = h; return true; };
+  try {
+    if (cfg.token && fn !== vSettings) await getMe();
+    await fn({ p: params, R, id, keep });
+    if (keep && id === navId) window.scrollTo(0, y);
+  } catch (e) { if (id === navId) { $('#view').innerHTML = errHtml(e); } }
+}
+const reload = () => route(true);
+async function refreshTodoBadge(){ try { const t = await api('/todos?state=pending&per_page=100'); const b = $('#todo-badge'); b.hidden = !t.length; b.textContent = t.length > 99 ? '99+' : t.length; } catch {} }
+
+/* ================= Views: top level ================= */
+const ACTION = { assigned:'assigned you', mentioned:'mentioned you', directly_addressed:'mentioned you', build_failed:'pipeline failed', marked:'added a to-do for you',
+  approval_required:'set you as an approver', review_requested:'requested your review', unmergeable:'merge request can’t be merged', merge_train_removed:'removed from merge train', member_access_requested:'requested access', review_submitted:'reviewed your merge request' };
+async function vHome({ R }){
+  head('To-Do List');
+  const todos = await all('/todos?state=pending', 2);
+  const b = $('#todo-badge'); b.hidden = !todos.length; b.textContent = todos.length;
+  const target = t => t.target_type === 'MergeRequest' && t.target ? `data-go="#/p/${t.project.id}/mr/${t.target.iid}"` : t.target_type === 'Issue' && t.target ? `data-go="#/p/${t.project.id}/issue/${t.target.iid}"` : `data-ext="${esc(t.target_url)}"`;
+  if (!R(`<div class="toolbar"><span class="grow meta">${plural(todos.length,'pending item')}</span>${todos.length?'<button class="btn sm" data-act="alldone">Mark all as done</button>':''}</div>` +
+    (todos.length ? `<div class="list">${todos.map(t => `<div class="item" ${target(t)}>${av(t.author,32)}<div class="grow"><div class="meta"><b style="color:var(--text)">${esc(t.author?.name)}</b> ${esc(ACTION[t.action_name] || t.action_name)} · ${ago(t.created_at)}</div><div class="title">${t.target_type==='MergeRequest'?'!':'#'}${esc(t.target?.iid ?? '')} ${esc(t.target?.title || t.body)}</div><div class="meta">${esc(t.project?.path_with_namespace || '')}</div></div><button class="icon-btn" data-act="done" data-id="${t.id}" aria-label="Mark as done">${ic('check')}</button></div>`).join('')}</div>`
+      : empty('You’re all caught up', 'No pending to-do items.')))) return;
+  acts = {
+    done: el => busy(el, async () => { await api(`/todos/${el.dataset.id}/mark_as_done`, { method:'POST' }); el.closest('.item').remove(); refreshTodoBadge(); }, 'Marked as done'),
+    alldone: el => busy(el, async () => { await api('/todos/mark_as_done', { method:'POST' }); await reload(); }, 'All items marked as done')
+  };
+}
+function mrRow(m, full = true){
+  return `<div class="item" data-go="#/p/${m.project_id}/mr/${m.iid}"><div class="grow"><div class="title">${m.draft?'<span class="badge b-neutral">Draft</span> ':''}${esc(m.title)}</div><div class="meta">${esc(full ? m.references?.full : m.references?.short || '!' + m.iid)} · created ${ago(m.created_at)} by ${esc(m.author?.name)}</div><div class="meta">${ic('branch',13)} ${esc(m.source_branch)} → ${esc(m.target_branch)}</div>${labelsHtml(m.labels)}</div><div class="side">${m.state!=='opened'?stateBadge(m.state):''}<span class="avs">${(m.reviewers||[]).slice(0,3).map(u=>av(u,20)).join('')}</span><span class="meta nowrap">${ic('comment',14)} ${m.user_notes_count||0}</span><span class="meta nowrap">${ago(m.updated_at)}</span></div></div>`;
+}
+function issueRow(i, full = true){
+  return `<div class="item" data-go="#/p/${i.project_id}/issue/${i.iid}"><div class="grow"><div class="title">${i.confidential?ic('lock',14)+' ':''}${esc(i.title)}</div><div class="meta">${esc(full ? i.references?.full : '#' + i.iid)} · created ${ago(i.created_at)} by ${esc(i.author?.name)}${i.due_date?' · due '+esc(i.due_date):''}</div>${labelsHtml(i.labels)}</div><div class="side">${i.state!=='opened'?stateBadge(i.state):''}<span class="avs">${(i.assignees||[]).slice(0,3).map(u=>av(u,20)).join('')}</span><span class="meta nowrap">${ic('comment',14)} ${i.user_notes_count||0}</span></div></div>`;
+}
+async function vMrs({ p, R }){
+  const scope = p.scope || 'review'; head('Merge requests');
+  const q = { review:`/merge_requests?scope=all&state=opened&reviewer_username=${enc(me.username)}`, assigned:'/merge_requests?scope=assigned_to_me&state=opened', created:'/merge_requests?scope=created_by_me&state=opened' }[scope];
+  const list = await api(q + '&per_page=50&with_labels_details=true&order_by=updated_at');
+  R(tabs([{k:'review',label:'Review requests',h:'#/mrs/review'},{k:'assigned',label:'Assigned',h:'#/mrs/assigned'},{k:'created',label:'Created by me',h:'#/mrs/created'}], scope) +
+    (list.length ? `<div class="list">${list.map(m => mrRow(m)).join('')}</div>` : empty('No open merge requests', 'Nothing needs your attention here.')));
+}
+async function vIssues({ p, R }){
+  const scope = p.scope || 'assigned'; head('Issues');
+  const list = await api(`/issues?scope=${scope==='created'?'created_by_me':'assigned_to_me'}&state=opened&per_page=50&with_labels_details=true&order_by=updated_at`);
+  R(tabs([{k:'assigned',label:'Assigned to me',h:'#/issues/assigned'},{k:'created',label:'Created by me',h:'#/issues/created'}], scope) +
+    (list.length ? `<div class="list">${list.map(i => issueRow(i)).join('')}</div>` : empty('No open issues', 'Issues assigned to you will appear here.')));
+}
+async function vProjects({ p, R }){
+  const scope = p.scope || 'yours'; head('Projects');
+  if (!R(tabs([{k:'yours',label:'Yours',h:'#/projects/yours'},{k:'starred',label:'Starred',h:'#/projects/starred'}], scope) + `<div class="searchbar"><input type="search" data-in="q" placeholder="Filter by name" aria-label="Filter projects"></div><div id="plist" class="list"><div class="loading"><span class="spinner"></span></div></div>`)) return;
+  const load = async q => { const ps = await api(`/projects?${scope==='starred'?'starred=true':'membership=true'}&simple=true&order_by=last_activity_at&per_page=50${q?'&search='+enc(q):''}`);
+    const box = $('#plist'); if (!box) return;
+    box.innerHTML = ps.length ? ps.map(pr => `<div class="item" data-go="#/p/${pr.id}">${av({name:pr.name, avatar_url:pr.avatar_url},36,true)}<div class="grow"><div class="title">${esc(pr.name)}</div><div class="meta">${esc(pr.namespace?.full_path || pr.path_with_namespace)}</div>${pr.description?`<div class="meta">${esc(pr.description)}</div>`:''}</div><span class="meta nowrap">${ago(pr.last_activity_at)}</span></div>`).join('') : empty('No projects found'); };
+  inputs.q = v => load(v).catch(e => toast(errMsg(e)));
+  await load('');
+}
+async function vSettings({ R }){
+  head('Settings');
+  let who = ''; if (cfg.token) { try { await getMe(); who = `<div class="item" style="cursor:default">${av(me,40)}<div class="grow"><div class="title">${esc(me.name)}</div><div class="meta">@${esc(me.username)} · ${esc(baseUrl())}</div></div></div>`; } catch {} }
+  const theme = store.get('theme') || '', curIcon = store.get('app_icon') || 'classic';
+  if (!R(`${who?`<div class="list">${who}</div>`:''}<div class="form"><div class="field"><label for="s-host">GitLab address</label><input id="s-host" type="url" inputmode="url" placeholder="https://gitlab.yourcompany.com" value="${esc(cfg.host)}"><p class="hint">The base address only, without /api/v4 or a project path.</p></div>
+    <div class="field"><label for="s-token">Personal access token</label><input id="s-token" type="password" autocomplete="off" placeholder="glpat-…" value="${esc(cfg.token)}"><p class="hint">Needs the <b>api</b> scope. It’s saved only on this phone and sent only to your GitLab server.</p></div>
+    <div class="btns"><button class="btn confirm" data-act="save">Save and connect</button>${cfg.token?'<button class="btn danger-o" data-act="signout">Remove token</button>':''}</div><p class="hint" id="s-status" role="status"></p>
+    <div class="field"><label>App icon</label><div class="icon-grid" role="radiogroup" aria-label="App icon">${APP_ICONS.map(([k, l]) => `<button type="button" role="radio" class="icon-opt${k===curIcon?' on':''}" aria-checked="${k===curIcon}" data-act="seticon" data-v="${k}"><img src="icons/${k}-180.png" alt=""><span>${l}</span></button>`).join('')}</div><div id="icon-how"></div></div>
+    <div class="field"><label for="s-theme">Appearance</label><select id="s-theme"><option value="">Match device</option><option value="light"${theme==='light'?' selected':''}>Light</option><option value="dark"${theme==='dark'?' selected':''}>Dark</option></select></div></div>`)) return;
+  $('#s-theme').onchange = e => { store.set('theme', e.target.value); applyTheme(); };
+  acts = {
+    async save(el){ const host = $('#s-host').value.trim().replace(/\/+$/, '').replace(/\/api\/v4$/, ''), token = $('#s-token').value.trim();
+      if (!/^https?:\/\//.test(host)) return toast('Enter the full address, starting with https://');
+      const old = { ...cfg }; cfg = { host, token }; me = null; Object.keys(projCache).forEach(k => delete projCache[k]);
+      $('#s-status').textContent = 'Connecting…';
+      const ok = await busy(el, async () => { await getMe(); store.set('gl_host', host); store.set('gl_token', token); });
+      if (ok) { toast(`Connected as ${me.name}`); refreshTodoBadge(); go('#/'); } else { cfg = old; $('#s-status').textContent = 'Couldn’t connect. Check the address, the token, and that the VPN is on.'; }
+    },
+    seticon(el){ const k = el.dataset.v; store.set('app_icon', k); applyIcon(k);
+      $$('.icon-opt').forEach(b => { const on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+      const link = location.origin + location.pathname + '?icon=' + k;
+      const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      $('#icon-how').innerHTML = `<div class="howto"><b>To change the icon on your home screen</b>${ios ? `<ol><li>Copy the setup link below and open it in Safari.</li><li>Tap Share, then Add to Home Screen.</li><li>Delete the old icon from your home screen.</li></ol><p class="meta" style="margin:6px 0 0">The new copy starts fresh on iPhone, so you’ll enter your GitLab address and token once more.</p>` : `<ol><li>Remove GitLab Pocket from your home screen (long-press the icon, then Uninstall or Remove).</li><li>Open the setup link below in Chrome.</li><li>Tap ⋮, then Install app or Add to Home screen.</li></ol><p class="meta" style="margin:6px 0 0">Your token is kept, since Chrome shares it with the installed app.</p>`}<div class="btns"><button class="btn sm" data-act="copy" data-v="${esc(link)}">${ic('copy',14)} Copy setup link</button></div></div>`;
+      toast('Icon selected'); },
+    signout(){ if (!confirm('Remove the token from this phone?')) return; store.del('gl_token'); cfg.token = ''; me = null; toast('Token removed'); route(); }
+  };
 }
 
-function pipelineDetail(pid, plid){
-  push(async () => {
-    const [p, jobs] = await Promise.all([api(`/projects/${pid}/pipelines/${plid}`), api(`/projects/${pid}/pipelines/${plid}/jobs?per_page=100`)]);
-    const stages = [...new Set(jobs.map(j=>j.stage))];
-    render(`<div class="card"><span class="pill s-${esc(p.status)}">${esc(p.status)}</span><h2>Pipeline #${p.id}</h2>
-      <div class="hint">${esc(p.ref)} · ${esc(p.sha.slice(0,8))} · ${ago(p.updated_at)}</div>
-      <div class="actions"><button class="btn ghost" id="retry">Retry failed</button><button class="btn danger" id="cancel">Cancel</button><button class="btn ghost" id="web">Open in browser</button></div></div>
-      ${stages.map(s=>`<p class="hint" style="margin:14px 4px 6px">${esc(s)}</p><div class="list">${jobs.filter(j=>j.stage===s).reverse().map(j=>`<button class="row" data-j="${j.id}" data-st="${esc(j.status)}"><div class="t"><span class="pill s-${esc(j.status)}">${esc(j.status)}</span>${esc(j.name)}</div>${j.duration?`<div class="m">${Math.round(j.duration)}s</div>`:''}</button>`).join('')}</div>`).join('')}`);
-    $('#web').onclick = () => window.open(p.web_url, '_blank');
-    $('#retry').onclick = async () => { try{ await api(`/projects/${pid}/pipelines/${plid}/retry`,{method:'POST'}); toast('Retrying'); show(); }catch(e){ toast(e.message); } };
-    $('#cancel').onclick = async () => { if(!confirm('Cancel this pipeline?'))return; try{ await api(`/projects/${pid}/pipelines/${plid}/cancel`,{method:'POST'}); toast('Canceled'); show(); }catch(e){ toast(e.message); } };
-    document.querySelectorAll('.row[data-j]').forEach(r=>r.onclick=()=>jobLog(pid, r.dataset.j, r.dataset.st));
-  }, 'Pipeline #' + plid);
+/* ================= Views: project & repository ================= */
+async function vProject({ p, R }){
+  const pr = await proj(p.pid); head(pr.name, pr.namespace?.full_path, [{ label:'Open in GitLab', fn:() => openExt(pr.web_url) }, { label:'Copy clone URL (HTTPS)', fn:() => gacts.copy({ dataset:{ v: pr.http_url_to_repo } }) }]);
+  const def = enc(pr.default_branch || 'main');
+  const row = (icn, label, h, extra = '') => `<div class="nav-row" data-go="${h}">${ic(icn)}<span class="grow">${label}</span>${extra}${ic('chev',16)}</div>`;
+  if (!R(`<div class="page-h"><div style="display:flex;gap:12px;align-items:center">${av({name:pr.name, avatar_url:pr.avatar_url},48,true)}<div class="grow"><h1 style="margin:0">${esc(pr.name)}</h1><div class="meta">${esc(pr.path_with_namespace)}</div></div></div>${pr.description?`<p class="meta" style="margin:10px 0 0">${esc(pr.description)}</p>`:''}<div class="btns"><button class="btn confirm" data-go="#/p/${pr.id}/mr/new">${ic('plus',16)} New merge request</button><button class="btn" data-go="#/p/${pr.id}/issue/new">${ic('plus',16)} New issue</button></div></div>
+    <div class="list">${row('folder','Repository',`#/p/${pr.id}/tree/${def}`, `<span class="branch">${esc(pr.default_branch||'')}</span>`)}${row('commit','Commits',`#/p/${pr.id}/commits/${def}`)}${row('branch','Branches',`#/p/${pr.id}/branches`)}${row('mr','Merge requests',`#/p/${pr.id}/mrs/opened`)}${pr.issues_enabled!==false?row('issue','Issues',`#/p/${pr.id}/issues/opened`, pr.open_issues_count!=null?`<span class="count">${pr.open_issues_count}</span>`:''):''}${row('pipeline','Pipelines',`#/p/${pr.id}/pipelines`)}</div><div id="readme"></div>`)) return;
+  if (pr.readme_url && pr.default_branch) {
+    const prefix = `${pr.web_url}/-/blob/${pr.default_branch}/`;
+    if (pr.readme_url.startsWith(prefix)) { const path = decodeURIComponent(pr.readme_url.slice(prefix.length));
+      api(`/projects/${pr.id}/repository/files/${enc(path)}/raw?ref=${enc(pr.default_branch)}`, { raw:true }).then(t => { const el = $('#readme'); if (el) el.innerHTML = `<div class="card"><div class="card-h">${ic('file',16)} ${esc(path)}</div><div class="card-b">${/\.(md|markdown)$/i.test(path)?md(t, pr):`<div class="md pre">${esc(t)}</div>`}</div></div>`; }).catch(() => {}); }
+  }
+}
+function crumbs(pr, ref, path, mode){
+  const segs = path ? path.split('/') : [];
+  let h = `<div class="crumbs"><button class="branch" data-go="#/p/${pr.id}/branches">${ic('branch',12)} ${esc(ref)}</button> &nbsp;<a href="#/p/${pr.id}/tree/${enc(ref)}">${esc(pr.path)}</a>`;
+  segs.forEach((s, i) => { const sub = segs.slice(0, i + 1).map(enc).join('/'); h += ` / ${i === segs.length - 1 && mode === 'blob' ? `<b>${esc(s)}</b>` : `<a href="#/p/${pr.id}/tree/${enc(ref)}/${sub}">${esc(s)}</a>`}`; });
+  return h + '</div>';
+}
+async function vTree({ p, R }){
+  const pr = await proj(p.pid), path = p.path || ''; head(path.split('/').pop() || 'Repository', pr.path_with_namespace);
+  const items = await all(`/projects/${pr.id}/repository/tree?ref=${enc(p.ref)}${path?'&path='+enc(path):''}`, 3);
+  items.sort((a, b) => (a.type === b.type ? a.name.localeCompare(b.name) : a.type === 'tree' ? -1 : 1));
+  R(crumbs(pr, p.ref, path, 'tree') + (items.length ? `<div class="list">${items.map(it => `<div class="nav-row" data-go="#/p/${pr.id}/${it.type==='tree'?'tree':'blob'}/${enc(p.ref)}/${it.path.split('/').map(enc).join('/')}">${ic(it.type==='tree'?'folder':'file')}<span class="grow" style="font-weight:${it.type==='tree'?600:400}">${esc(it.name)}</span></div>`).join('')}</div>` : empty('This folder is empty')));
+}
+async function vBlob({ p, R }){
+  const pr = await proj(p.pid), path = p.path; head(path.split('/').pop(), pr.path_with_namespace, [{ label:'Open in GitLab', fn:() => openExt(`${pr.web_url}/-/blob/${p.ref}/${path}`) }]);
+  if (/\.(png|jpe?g|gif|webp|svg|ico|pdf|zip|jar|bin|exe|woff2?|ttf)$/i.test(path)) return R(crumbs(pr, p.ref, path, 'blob') + empty('Preview not available', 'Open this file in GitLab to view it.'));
+  const txt = await api(`/projects/${pr.id}/repository/files/${enc(path)}/raw?ref=${enc(p.ref)}`, { raw:true });
+  const body = /\.(md|markdown)$/i.test(path) ? `<div class="card"><div class="card-b">${md(txt, pr)}</div></div>` : txt.includes('\u0000') ? empty('Binary file', 'Open it in GitLab to view.') :
+    `<div class="card"><div class="card-h"><span class="grow meta" style="font-weight:400">${plural(txt.split('\n').length,'line')}</span><button class="btn sm" data-act="copy" data-v="${esc(txt)}">${ic('copy',14)} Copy</button></div><div class="card-b code-view">${txt.split('\n').slice(0, 6000).map(l => `<div>${esc(l) || ' '}</div>`).join('')}</div></div>`;
+  R(crumbs(pr, p.ref, path, 'blob') + body);
+}
+async function vBranches({ p, R }){
+  const pr = await proj(p.pid); head('Branches', pr.path_with_namespace);
+  if (!R(`<div class="searchbar"><input type="search" data-in="q" placeholder="Filter by branch name" aria-label="Filter branches"></div><div id="blist" class="list"><div class="loading"><span class="spinner"></span></div></div>`)) return;
+  const load = async q => { let bs; try { bs = await api(`/projects/${pr.id}/repository/branches?per_page=50&sort=updated_desc${q?'&search='+enc(q):''}`); } catch { bs = await api(`/projects/${pr.id}/repository/branches?per_page=50${q?'&search='+enc(q):''}`); }
+    const box = $('#blist'); if (!box) return;
+    box.innerHTML = bs.length ? bs.map(b => `<div class="item" data-go="#/p/${pr.id}/tree/${enc(b.name)}"><div class="grow"><div class="title" style="font-family:ui-monospace,Menlo,monospace;font-size:14px">${esc(b.name)} ${b.default?'<span class="badge b-info">default</span>':''}${b.protected?' <span class="badge b-neutral">protected</span>':''}${b.merged?' <span class="badge b-merged">merged</span>':''}</div><div class="meta">${esc(b.commit?.title)} · ${ago(b.commit?.committed_date)}</div></div>${!b.default?`<button class="btn sm" data-go="#/p/${pr.id}/mr/new/${enc(b.name)}">Create MR</button>`:''}</div>`).join('') : empty('No branches found'); };
+  inputs.q = v => load(v).catch(e => toast(errMsg(e)));
+  await load('');
+}
+function commitRows(pid, cs){
+  let day = '', h = '';
+  for (const c of cs) { const d = new Date(c.created_at).toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    if (d !== day) { if (day) h += '</div>'; day = d; h += `<div class="day">${esc(d)}</div><div class="list">`; }
+    h += `<div class="item" data-go="#/p/${pid}/commit/${c.id}">${av({name:c.author_name},32)}<div class="grow"><div class="title">${esc(c.title)}</div><div class="meta">${esc(c.author_name)} authored ${ago(c.created_at)}</div></div><span class="sha">${esc(c.short_id)}</span></div>`; }
+  return h ? h + '</div>' : empty('No commits');
+}
+async function vCommits({ p, R }){
+  const pr = await proj(p.pid); head('Commits', `${pr.path_with_namespace} · ${p.ref}`);
+  R(commitRows(pr.id, await api(`/projects/${pr.id}/repository/commits?ref_name=${enc(p.ref)}&per_page=50`)));
+}
+async function vCommit({ p, R }){
+  const pr = await proj(p.pid); CUR = { pr, pid: pr.id };
+  const [c, diffs] = await Promise.all([api(`/projects/${pr.id}/repository/commits/${p.sha}`), all(`/projects/${pr.id}/repository/commits/${p.sha}/diff`, 5)]);
+  head(c.short_id, pr.path_with_namespace, [{ label:'Open in GitLab', fn:() => openExt(c.web_url) }, { label:'Copy commit SHA', fn:() => gacts.copy({ dataset:{ v:c.id } }) }]);
+  const body = c.message.split('\n').slice(1).join('\n').trim();
+  R(`<div class="page-h"><h1 style="margin-top:0">${esc(c.title)}</h1><div class="meta">${av({name:c.author_name},20)} ${esc(c.author_name)} authored ${ago(c.created_at)} · <span class="sha">${esc(c.short_id)}</span>${c.last_pipeline?` · ${ci(c.last_pipeline.status)} <a href="#/p/${pr.id}/pipeline/${c.last_pipeline.id}">#${c.last_pipeline.id}</a>`:''}</div>${body?`<div class="md pre" style="margin-top:10px;font-size:14px">${esc(body)}</div>`:''}</div>` + filesHtml(diffs, { key:'c:' + c.id, comment:false }));
 }
 
-function jobLog(pid, jid, status){
-  push(async () => {
-    const res = await fetch(cfg.host.replace(/\/$/,'') + `/api/v4/projects/${pid}/jobs/${jid}/trace`, {headers:{'PRIVATE-TOKEN':cfg.token}});
-    const txt = res.ok ? (await res.text()).replace(/\x1b\[[0-9;]*m/g,'').replace(/section_(start|end):\d+:\S+\r?/g,'') : 'No log available.';
-    render(`<div class="actions">${['failed','canceled','success'].includes(status)?'<button class="btn ghost" id="retry">Retry job</button>':''}${status==='manual'?'<button class="btn" id="play">Run job</button>':''}</div>
-      <div class="card"><div class="desc" style="font-family:ui-monospace,Menlo,monospace;font-size:12px;overflow-x:auto;white-space:pre">${esc(txt.slice(-30000))}</div></div>`);
-    if($('#retry')) $('#retry').onclick = async()=>{ try{ await api(`/projects/${pid}/jobs/${jid}/retry`,{method:'POST'}); toast('Job retried'); }catch(e){ toast(e.message); } };
-    if($('#play')) $('#play').onclick = async()=>{ try{ await api(`/projects/${pid}/jobs/${jid}/play`,{method:'POST'}); toast('Job started'); }catch(e){ toast(e.message); } };
-  }, 'Job log');
+/* ================= Views: lists in a project ================= */
+async function vProjectMrs({ p, R }){
+  const pr = await proj(p.pid), st = p.state || 'opened'; head('Merge requests', pr.path_with_namespace);
+  if (!R(tabs(['opened','merged','closed','all'].map(k => ({ k, label: k === 'opened' ? 'Open' : k[0].toUpperCase() + k.slice(1), h:`#/p/${pr.id}/mrs/${k}` })), st) +
+    `<div class="toolbar"><input type="search" data-in="q" placeholder="Search merge requests" aria-label="Search merge requests" style="flex:1"><button class="btn confirm" data-go="#/p/${pr.id}/mr/new">New</button></div><div id="mlist" class="list"><div class="loading"><span class="spinner"></span></div></div>`)) return;
+  const load = async q => { const ms = await api(`/projects/${pr.id}/merge_requests?state=${st}&per_page=50&with_labels_details=true&order_by=updated_at${q?'&search='+enc(q):''}`); const box = $('#mlist'); if (box) box.innerHTML = ms.length ? ms.map(m => mrRow(m, false)).join('') : empty('No merge requests here'); };
+  inputs.q = v => load(v).catch(e => toast(errMsg(e)));
+  await load('');
+}
+async function vProjectIssues({ p, R }){
+  const pr = await proj(p.pid), st = p.state || 'opened'; head('Issues', pr.path_with_namespace);
+  if (!R(tabs(['opened','closed','all'].map(k => ({ k, label: k === 'opened' ? 'Open' : k[0].toUpperCase() + k.slice(1), h:`#/p/${pr.id}/issues/${k}` })), st) +
+    `<div class="toolbar"><input type="search" data-in="q" placeholder="Search issues" aria-label="Search issues" style="flex:1"><button class="btn confirm" data-go="#/p/${pr.id}/issue/new">New</button></div><div id="ilist" class="list"><div class="loading"><span class="spinner"></span></div></div>`)) return;
+  const load = async q => { const is = await api(`/projects/${pr.id}/issues?state=${st}&per_page=50&with_labels_details=true&order_by=updated_at${q?'&search='+enc(q):''}`); const box = $('#ilist'); if (box) box.innerHTML = is.length ? is.map(i => issueRow(i, false)).join('') : empty('No issues here'); };
+  inputs.q = v => load(v).catch(e => toast(errMsg(e)));
+  await load('');
 }
 
-/* ---------- Issues ---------- */
-function issueList(){
-  push(async () => {
-    const is = await api('/issues?scope=assigned_to_me&state=opened&per_page=40&order_by=updated_at');
-    render(is.length?`<div class="list">${is.map(i=>`<button class="row" data-p="${i.project_id}" data-i="${i.iid}"><div class="t">${esc(i.title)}</div><div class="m">${esc(i.references?.full)} · ${ago(i.updated_at)}${i.labels.length?' · '+esc(i.labels.join(', ')):''}</div></button>`).join('')}</div>`:'<div class="empty">No open issues assigned to you.</div>');
-    document.querySelectorAll('.row').forEach(r=>r.onclick=()=>issueDetail(r.dataset.p, r.dataset.i));
-  }, 'My issues');
+/* ================= Merge request ================= */
+const MERGE_MSG = { mergeable:['ok','Ready to merge'], ci_still_running:['warn','Pipeline is still running'], ci_must_pass:['bad','Pipeline must succeed before merging'],
+  not_approved:['warn','Approval is required before merging'], discussions_not_resolved:['warn','All threads must be resolved before merging'], draft_status:['warn','Merge blocked: this merge request is a draft'],
+  conflict:['bad','Merge conflicts must be resolved. Resolve them in GitLab or locally.'], broken_status:['bad','The source branch can’t be merged cleanly'], need_rebase:['warn','The source branch must be rebased onto the target branch'],
+  not_open:['neutral','Merge request is not open'], blocked_status:['warn','Merge is blocked by another merge request'], checking:['neutral','Checking whether this can be merged…'], unchecked:['neutral','Checking whether this can be merged…'],
+  preparing:['neutral','Preparing the merge request…'], requested_changes:['warn','A reviewer requested changes'], jira_association_missing:['warn','A linked Jira issue is required'], external_status_checks:['warn','External status checks must pass'], security_policy_violations:['warn','Security policy checks must pass'] };
+const RUNNING = ['running','pending','created','waiting_for_resource','preparing','scheduled'];
+async function vMr({ p, R }){
+  const tab = p.tab || 'overview', B = `/projects/${p.pid}/merge_requests/${p.iid}`;
+  const [pr, m] = await Promise.all([proj(p.pid), api(B)]);
+  const drafts = await api(`${B}/draft_notes`).catch(() => []);
+  CUR = { pr, pid: pr.id, iid: m.iid, B, isMr: true, m, drafts };
+  const draftFlag = m.draft || m.work_in_progress;
+  head('!' + m.iid, pr.path_with_namespace, [
+    { label:'Edit', fn:() => go(`#/p/${pr.id}/mr/${m.iid}/edit`) },
+    ...(m.state === 'opened' ? [{ label: draftFlag ? 'Mark as ready' : 'Mark as draft', fn:() => busy(null, async () => { await api(B, { method:'PUT', body:{ title:setDraft(m.title, !draftFlag) } }); await reload(); }, draftFlag ? 'Marked as ready' : 'Marked as draft') }] : []),
+    { label:'Copy source branch name', fn:() => gacts.copy({ dataset:{ v:m.source_branch } }) },
+    { label:'Copy link', fn:() => gacts.copy({ dataset:{ v:m.web_url } }) },
+    { label:'Open in GitLab', fn:() => openExt(m.web_url) },
+    ...(m.state === 'opened' ? [{ label:'Close merge request', danger:true, fn:() => confirm('Close this merge request?') && busy(null, async () => { await api(B, { method:'PUT', body:{ state_event:'close' } }); await reload(); }, 'Merge request closed') }] :
+      m.state === 'closed' ? [{ label:'Reopen merge request', fn:() => busy(null, async () => { await api(B, { method:'PUT', body:{ state_event:'reopen' } }); await reload(); }, 'Merge request reopened') }] : [])
+  ]);
+  const header = `<div class="page-h"><div>${stateBadge(m.state)} ${draftFlag?'<span class="badge b-neutral">Draft</span>':''}</div><h1>${esc(m.title)}</h1><div class="meta">${av(m.author,20)} <b style="color:var(--text)">${esc(m.author.name)}</b> requested to merge <button class="branch" data-act="copy" data-v="${esc(m.source_branch)}" aria-label="Copy branch name ${esc(m.source_branch)}">${esc(m.source_branch)}</button> into <span class="branch">${esc(m.target_branch)}</span> · ${ago(m.created_at)}</div></div>` +
+    tabs([{ k:'overview', label:'Overview', count:m.user_notes_count, h:`#/p/${pr.id}/mr/${m.iid}` }, { k:'commits', label:'Commits', h:`#/p/${pr.id}/mr/${m.iid}/commits` }, { k:'pipelines', label:'Pipelines', h:`#/p/${pr.id}/mr/${m.iid}/pipelines` }, { k:'changes', label:'Changes', count:m.changes_count, h:`#/p/${pr.id}/mr/${m.iid}/changes` }], tab);
+  const bar = drafts.length ? `<div class="rb-space"></div><div class="review-bar"><div class="grow"><b>${plural(drafts.length,'pending comment')}</b><div class="meta">Only you can see these until you submit.</div></div><button class="btn confirm" data-act="submitreview">Submit review</button></div>` : '';
+  let body = '';
+  if (tab === 'overview') body = await mrOverview(m, pr, B, drafts);
+  else if (tab === 'commits') body = commitRows(pr.id, await all(`${B}/commits`, 3));
+  else if (tab === 'pipelines') { const pls = await api(`${B}/pipelines`);
+    body = `<div class="toolbar"><span class="grow meta">${plural(pls.length,'pipeline')}</span>${m.state==='opened'?'<button class="btn sm" data-act="runmrp">'+ic('play',14)+' Run pipeline</button>':''}</div>` + (pls.length ? `<div class="list">${pls.map(pl => pipeRow(pr.id, pl)).join('')}</div>` : empty('No pipelines yet'));
+    acts.runmrp = el => busy(el, async () => { await api(`${B}/pipelines`, { method:'POST' }); await reload(); }, 'Pipeline started'); }
+  else if (tab === 'changes') {
+    let files; try { files = await all(`${B}/diffs`, 10); } catch { files = (await api(`${B}/changes`)).changes; }
+    const discs = await all(`${B}/discussions`, 5); const tmap = {};
+    for (const d of discs) { const pos = d.notes[0].position; if (pos && pos.position_type === 'text' && (pos.new_line || pos.old_line)) (tmap[threadKey(pos)] ||= []).push({ d }); }
+    for (const dn of drafts) { const pos = dn.position; if (pos && (pos.new_line || pos.old_line)) (tmap[threadKey(pos)] ||= []).push({ draft: dn }); }
+    body = `<p class="meta" style="padding:10px 16px 0;margin:0">Tap any line to comment on it.</p>` + filesHtml(files, { key:`mr:${pr.id}:${m.iid}`, comment: true, tmap, diffRefs: m.diff_refs, drafts });
+  }
+  const saved = acts; R(header + body + bar); acts = saved;
+}
+async function mrOverview(m, pr, B, drafts){
+  const [appr, discs] = await Promise.all([api(`${B}/approvals`).catch(() => null), all(`${B}/discussions`, 5)]);
+  const pl = m.head_pipeline;
+  const approvedBy = appr ? appr.approved_by.map(a => a.user) : [];
+  const iApproved = appr && (appr.user_has_approved ?? approvedBy.some(u => u.id === me.id));
+  const draftFlag = m.draft || m.work_in_progress;
+  let w = pl ? `<div class="w-row" data-go="#/p/${pr.id}/pipeline/${pl.id}" style="cursor:pointer"><span class="ic">${ci(pl.status)}</span><div class="grow"><b>Pipeline #${pl.id} ${esc(ciText(pl.status))}</b><div class="meta">for ${esc(pl.sha.slice(0,8))} · ${ago(pl.updated_at)}</div></div>${ic('chev',16)}</div>`
+    : `<div class="w-row"><span class="ic">${ic('pipeline')}</span><div class="grow meta">No pipeline has run for this merge request.</div></div>`;
+  if (appr) w += `<div class="w-row"><span class="ic" style="color:${approvedBy.length?'var(--green)':'var(--muted)'}">${ic('approve')}</span><div class="grow"><b>${approvedBy.length ? 'Approved by' : appr.approvals_left ? 'Approval required' : 'Approval is optional'}</b>${approvedBy.length?`<div style="margin-top:4px">${approvedBy.map(person).join('')}</div>`:''}${appr.approvals_left?`<div class="meta">Requires ${plural(appr.approvals_left,'more approval')}</div>`:''}</div>${m.state==='opened'?`<button class="btn sm ${iApproved?'':'confirm'}" data-act="approve" data-v="${iApproved?'unapprove':'approve'}">${iApproved?'Revoke approval':'Approve'}</button>`:''}</div>`;
+  if (m.state === 'merged') w += `<div class="w-row"><span class="ic" style="color:var(--purple)">${ic('merge')}</span><div class="grow"><b>Merged by ${esc(m.merged_by?.name || m.merge_user?.name || '')} ${ago(m.merged_at)}</b>${(m.merge_commit_sha||m.squash_commit_sha)?`<div class="meta">Commit <a href="#/p/${pr.id}/commit/${m.merge_commit_sha||m.squash_commit_sha}">${esc((m.merge_commit_sha||m.squash_commit_sha).slice(0,8))}</a></div>`:''}</div></div>`;
+  else if (m.state === 'closed') w += `<div class="w-row"><span class="ic" style="color:var(--red)">${ic('mr')}</span><div class="grow"><b>Closed${m.closed_by?' by '+esc(m.closed_by.name):''} ${ago(m.closed_at)}</b></div><button class="btn sm" data-act="reopen">Reopen</button></div>`;
+  else {
+    const st = m.detailed_merge_status || m.merge_status; const [tone, msg] = MERGE_MSG[st] || ['neutral', st];
+    const running = pl && RUNNING.includes(pl.status); const color = { ok:'var(--green)', warn:'var(--orange)', bad:'var(--red)', neutral:'var(--muted)' }[tone];
+    let btns = '';
+    if (m.merge_when_pipeline_succeeds) btns = `<div class="meta" style="margin-bottom:8px">Set to auto-merge${m.merge_user?' by '+esc(m.merge_user.name):''} when the pipeline succeeds.</div><button class="btn sm" data-act="cancelauto">Cancel auto-merge</button>`;
+    else if (draftFlag) btns = `<button class="btn confirm" data-act="ready">Mark as ready</button>`;
+    else if (st === 'mergeable') btns = `<button class="btn confirm" data-act="merge" data-auto="0">Merge</button>`;
+    else if (running && ['ci_still_running','ci_must_pass','checking','unchecked'].includes(st)) btns = `<button class="btn confirm" data-act="merge" data-auto="1">Set to auto-merge</button>`;
+    if (st === 'need_rebase') btns += ` <button class="btn" data-act="rebase">Rebase</button>`;
+    w += `<div class="w-row"><span class="ic" style="color:${color}">${ic(tone==='ok'?'merge':'warn')}</span><div class="grow"><b>${esc(msg)}</b>${!m.merge_when_pipeline_succeeds&&!draftFlag?`<label class="check"><input type="checkbox" id="o-del"${m.force_remove_source_branch?' checked':''}> Delete source branch</label><label class="check"><input type="checkbox" id="o-squash"${m.squash?' checked':''}> Squash commits</label>`:''}${btns?`<div class="btns">${btns}</div>`:''}</div></div>`;
+  }
+  acts = {
+    approve: el => busy(el, async () => { await api(`${B}/${el.dataset.v}`, { method:'POST' }); await reload(); }, el.dataset.v === 'approve' ? 'Approved' : 'Approval revoked'),
+    ready: el => busy(el, async () => { await api(B, { method:'PUT', body:{ title:setDraft(m.title, false) } }); await reload(); }, 'Marked as ready'),
+    reopen: el => busy(el, async () => { await api(B, { method:'PUT', body:{ state_event:'reopen' } }); await reload(); }, 'Merge request reopened'),
+    rebase: el => busy(el, async () => { await api(`${B}/rebase`, { method:'PUT' }); setTimeout(reload, 2500); }, 'Rebase started'),
+    cancelauto: el => busy(el, async () => { await api(`${B}/cancel_merge_when_pipeline_succeeds`, { method:'POST' }); await reload(); }, 'Auto-merge canceled'),
+    merge(el){ const auto = el.dataset.auto === '1';
+      if (!confirm(auto ? `Merge ${m.source_branch} automatically when the pipeline succeeds?` : `Merge ${m.source_branch} into ${m.target_branch}?`)) return;
+      busy(el, async () => { await api(`${B}/merge`, { method:'PUT', body:{ should_remove_source_branch: !!$('#o-del')?.checked, squash: !!$('#o-squash')?.checked, ...(auto ? { merge_when_pipeline_succeeds:true, auto_merge:true } : {}) } }); await reload(); }, auto ? 'Set to auto-merge' : 'Merged'); }
+  };
+  const det = `<div class="card details"><div class="card-h"><span class="grow">Details</span><button class="link" data-go="#/p/${pr.id}/mr/${m.iid}/edit">Edit</button></div>
+    <div class="drow"><div class="dk">Assignees</div><div class="dv">${m.assignees?.length ? m.assignees.map(person).join('') : '<span class="meta">None</span>'}</div></div>
+    <div class="drow"><div class="dk">Reviewers</div><div class="dv">${m.reviewers?.length ? m.reviewers.map(u => person(u) + (approvedBy.some(a => a.id === u.id) ? `<span style="color:var(--green)">${ic('check',14)}</span>` : '')).join('') : '<span class="meta">None</span>'}</div></div>
+    <div class="drow"><div class="dk">Labels</div><div class="dv">${m.labels?.length ? labelsHtml(m.labels).replace('class="labels"','class="labels" style="margin:0"') : '<span class="meta">None</span>'}</div></div>
+    ${m.milestone?`<div class="drow"><div class="dk">Milestone</div><div class="dv">${esc(m.milestone.title)}</div></div>`:''}</div>`;
+  const pending = drafts.length ? `<div class="section-h">Your pending comments</div>${drafts.map(draftHtml).join('')}` : '';
+  return `<div class="card"><div class="card-b">${m.description ? md(m.description, pr) : '<span class="meta">No description provided.</span>'}</div></div>` +
+    `<div class="card">${w}</div>` + det + pending + activityHtml(discs) +
+    `<div class="card"><div class="card-b">${editor('', 'Write a comment or use quick actions…', 'new-cmt')}<div class="btns"><button class="btn confirm" data-act="cmt" data-mode="note">Comment</button><button class="btn" data-act="cmt" data-mode="thread">Start thread</button><button class="btn" data-act="cmt" data-mode="draft">${drafts.length?'Add to review':'Start a review'}</button></div></div></div>`;
+}
+async function vMrForm({ p, R }){
+  const pr = await proj(p.pid); const isNew = !p.iid;
+  const mr = isNew ? null : await api(`/projects/${pr.id}/merge_requests/${p.iid}`);
+  head(isNew ? 'New merge request' : `Edit !${mr.iid}`, pr.path_with_namespace);
+  CUR = { pr, pid: pr.id };
+  let branches; try { branches = await api(`/projects/${pr.id}/repository/branches?per_page=100&sort=updated_desc`); } catch { branches = await api(`/projects/${pr.id}/repository/branches?per_page=100`); }
+  const labels = await all(`/projects/${pr.id}/labels`, 2).catch(() => []);
+  const src = mr ? mr.source_branch : (p.source || ''), tgt = mr ? mr.target_branch : pr.default_branch;
+  const names = branches.map(b => b.name); [src, tgt].forEach(n => { if (n && !names.includes(n)) names.unshift(n); });
+  Object.assign(PICK, { pid: pr.id, assignees: mr ? [...(mr.assignees || [])] : [], reviewers: mr ? [...(mr.reviewers || [])] : [], labels: new Set(mr ? mr.labels : []), res: {} });
+  const draftFlag = mr ? !!(mr.draft || mr.work_in_progress) : false;
+  const opts = (sel, ph) => (ph ? `<option value="">${esc(ph)}</option>` : '') + names.map(n => `<option${n === sel ? ' selected' : ''}>${esc(n)}</option>`).join('');
+  if (!R(`<div class="form">
+    <div class="field"><label for="f-src">Source branch</label>${isNew ? `<select id="f-src">${opts(src, 'Select source branch')}</select>` : `<div><span class="branch">${esc(src)}</span></div>`}</div>
+    <div class="field"><label for="f-tgt">Target branch</label><select id="f-tgt">${opts(tgt)}</select></div>
+    <div class="field"><label for="f-title">Title</label><input type="text" id="f-title" value="${esc(mr ? setDraft(mr.title, false) : '')}" placeholder="Describe the change in a few words"></div>
+    <label class="check"><input type="checkbox" id="f-draft"${draftFlag ? ' checked' : ''}> <span>Mark as draft<br><span class="meta">Drafts can’t be merged until they’re marked ready.</span></span></label>
+    <div class="field"><label>Description</label>${editor(mr ? mr.description || '' : '', 'Describe the goal of the changes and what reviewers should know.', 'f-desc')}</div>
+    <div class="field"><label>Assignees <button type="button" class="link" data-act="assignme">Assign to me</button></label>${picker('assignees')}</div>
+    <div class="field"><label>Reviewers</label>${picker('reviewers')}</div>
+    <div class="field"><label>Labels</label><div class="label-pick">${labels.length ? labels.map(l => `<button type="button" class="label${PICK.labels.has(l.name)?' on':''}" aria-pressed="${PICK.labels.has(l.name)}" data-act="lbl" data-v="${esc(l.name)}" style="--lc:${esc(l.color)};--lt:${esc(l.text_color)}">${esc(l.name)}</button>`).join('') : '<span class="meta">This project has no labels.</span>'}</div></div>
+    <label class="check"><input type="checkbox" id="f-del"${mr ? (mr.force_remove_source_branch ? ' checked' : '') : ' checked'}> Delete source branch when merge request is accepted</label>
+    <label class="check"><input type="checkbox" id="f-squash"${mr?.squash ? ' checked' : ''}> Squash commits when merge request is accepted</label>
+    <div class="btns" style="margin-top:20px"><button class="btn confirm" data-act="save">${isNew ? 'Create merge request' : 'Save changes'}</button><button class="btn" data-act="cancel">Cancel</button></div></div>`)) return;
+  if (isNew) {
+    let touched = false; $('#f-title').addEventListener('input', () => touched = true);
+    const fill = () => { const b = branches.find(x => x.name === $('#f-src').value); if (!touched && b) $('#f-title').value = b.commit?.title || b.name.replace(/[-_/]+/g, ' '); };
+    $('#f-src').onchange = fill; if (src) fill();
+  }
+  acts = {
+    cancel: () => history.back(),
+    async save(el){
+      const title = $('#f-title').value.trim(), source = isNew ? $('#f-src').value : src, target = $('#f-tgt').value;
+      if (!source) return toast('Choose a source branch'); if (!title) return toast('Add a title'); if (source === target) return toast('Source and target branches must be different');
+      const body = { target_branch: target, title: setDraft(title, $('#f-draft').checked), description: edVal($('#f-desc')), assignee_ids: PICK.assignees.map(u => u.id), reviewer_ids: PICK.reviewers.map(u => u.id), labels: [...PICK.labels].join(','), remove_source_branch: $('#f-del').checked, squash: $('#f-squash').checked };
+      let res; const ok = await busy(el, async () => { res = isNew ? await api(`/projects/${pr.id}/merge_requests`, { method:'POST', body:{ source_branch: source, ...body } }) : await api(`/projects/${pr.id}/merge_requests/${mr.iid}`, { method:'PUT', body }); }, isNew ? 'Merge request created' : 'Changes saved');
+      if (ok) location.replace(`#/p/${pr.id}/mr/${res.iid}`);
+    }
+  };
 }
 
-function issueDetail(pid, iid){
-  push(async () => {
-    const [i, notes] = await Promise.all([api(`/projects/${pid}/issues/${iid}`), api(`/projects/${pid}/issues/${iid}/notes?sort=asc&per_page=50`)]);
-    render(`<div class="card"><span class="pill s-${esc(i.state)}">${esc(i.state)}</span><h2>${esc(i.title)}</h2>
-      <div class="hint">${esc(i.references?.full)} by ${esc(i.author?.name)}</div>
-      <div class="actions"><button class="btn ghost" id="toggle">${i.state==='opened'?'Close issue':'Reopen issue'}</button><button class="btn ghost" id="web">Open in browser</button></div>
-      ${i.description?`<div class="desc">${esc(i.description)}</div>`:''}</div>
-      <div class="card"><b>Comments</b>${notes.filter(n=>!n.system).map(n=>`<div class="note"><b>${esc(n.author.name)}</b> <span class="hint">${ago(n.created_at)}</span><div class="desc">${esc(n.body)}</div></div>`).join('')||'<p class="hint">No comments yet.</p>'}
-      <label for="c">Add a comment</label><textarea id="c"></textarea><div class="actions"><button class="btn" id="post">Post comment</button></div></div>`);
-    $('#web').onclick = () => window.open(i.web_url,'_blank');
-    $('#toggle').onclick = async () => { try{ await api(`/projects/${pid}/issues/${iid}`,{method:'PUT',body:{state_event:i.state==='opened'?'close':'reopen'}}); toast(i.state==='opened'?'Issue closed':'Issue reopened'); show(); }catch(e){ toast(e.message); } };
-    $('#post').onclick = async () => { const body=$('#c').value.trim(); if(!body)return; try{ await api(`/projects/${pid}/issues/${iid}/notes`,{method:'POST',body:{body}}); toast('Comment posted'); show(); }catch(e){ toast(e.message); } };
-  }, '#' + iid);
+/* ================= Issues ================= */
+async function vIssue({ p, R }){
+  const B = `/projects/${p.pid}/issues/${p.iid}`;
+  const [pr, i, discs] = await Promise.all([proj(p.pid), api(B), all(`${B}/discussions`, 5)]);
+  CUR = { pr, pid: pr.id, iid: i.iid, B, isMr: false };
+  const toggle = i.state === 'opened' ? 'close' : 'reopen';
+  head('#' + i.iid, pr.path_with_namespace, [
+    { label:'Edit', fn:() => go(`#/p/${pr.id}/issue/${i.iid}/edit`) },
+    { label:'Create merge request', fn:() => go(`#/p/${pr.id}/mr/new`) },
+    { label:'Copy link', fn:() => gacts.copy({ dataset:{ v:i.web_url } }) },
+    { label:'Open in GitLab', fn:() => openExt(i.web_url) },
+    { label: toggle === 'close' ? 'Close issue' : 'Reopen issue', danger: toggle === 'close', fn:() => busy(null, async () => { await api(B, { method:'PUT', body:{ state_event:toggle } }); await reload(); }, toggle === 'close' ? 'Issue closed' : 'Issue reopened') }
+  ]);
+  R(`<div class="page-h"><div>${stateBadge(i.state)}${i.confidential?' <span class="badge b-warn">'+ic('lock',12)+' Confidential</span>':''}</div><h1>${esc(i.title)}</h1><div class="meta">${av(i.author,20)} Created ${ago(i.created_at)} by <b style="color:var(--text)">${esc(i.author.name)}</b></div></div>
+    <div class="card"><div class="card-b">${i.description ? md(i.description, pr) : '<span class="meta">No description provided.</span>'}</div></div>
+    <div class="card details"><div class="card-h"><span class="grow">Details</span><button class="link" data-go="#/p/${pr.id}/issue/${i.iid}/edit">Edit</button></div>
+      <div class="drow"><div class="dk">Assignees</div><div class="dv">${i.assignees?.length ? i.assignees.map(person).join('') : '<span class="meta">None</span>'}</div></div>
+      <div class="drow"><div class="dk">Labels</div><div class="dv">${i.labels?.length ? labelsHtml(i.labels).replace('class="labels"','class="labels" style="margin:0"') : '<span class="meta">None</span>'}</div></div>
+      ${i.milestone?`<div class="drow"><div class="dk">Milestone</div><div class="dv">${esc(i.milestone.title)}</div></div>`:''}${i.due_date?`<div class="drow"><div class="dk">Due date</div><div class="dv">${esc(i.due_date)}</div></div>`:''}</div>` +
+    activityHtml(discs) +
+    `<div class="card"><div class="card-b">${editor('', 'Write a comment or use quick actions…', 'new-cmt')}<div class="btns"><button class="btn confirm" data-act="cmt" data-mode="note">Comment</button><button class="btn" data-act="cmt" data-mode="thread">Start thread</button><button class="btn" data-act="cmt" data-mode="${toggle}">Comment &amp; ${toggle} issue</button></div></div></div>`);
+}
+async function vIssueForm({ p, R }){
+  const pr = await proj(p.pid), isNew = !p.iid;
+  const is = isNew ? null : await api(`/projects/${pr.id}/issues/${p.iid}`);
+  head(isNew ? 'New issue' : `Edit #${is.iid}`, pr.path_with_namespace); CUR = { pr, pid: pr.id };
+  const labels = await all(`/projects/${pr.id}/labels`, 2).catch(() => []);
+  Object.assign(PICK, { pid: pr.id, assignees: is ? [...(is.assignees || [])] : [], reviewers: [], labels: new Set(is ? is.labels : []), res: {} });
+  if (!R(`<div class="form">
+    <div class="field"><label for="f-title">Title</label><input type="text" id="f-title" value="${esc(is?.title || '')}"></div>
+    <div class="field"><label>Description</label>${editor(is?.description || '', 'Describe the problem or the request.', 'f-desc')}</div>
+    <label class="check"><input type="checkbox" id="f-conf"${is?.confidential ? ' checked' : ''}> <span>Confidential<br><span class="meta">Only project members with at least Planner or Reporter access can see it.</span></span></label>
+    <div class="field"><label>Assignees <button type="button" class="link" data-act="assignme">Assign to me</button></label>${picker('assignees')}</div>
+    <div class="field"><label>Labels</label><div class="label-pick">${labels.length ? labels.map(l => `<button type="button" class="label${PICK.labels.has(l.name)?' on':''}" aria-pressed="${PICK.labels.has(l.name)}" data-act="lbl" data-v="${esc(l.name)}" style="--lc:${esc(l.color)};--lt:${esc(l.text_color)}">${esc(l.name)}</button>`).join('') : '<span class="meta">This project has no labels.</span>'}</div></div>
+    <div class="field"><label for="f-due">Due date</label><input type="date" id="f-due" value="${esc(is?.due_date || '')}"></div>
+    <div class="btns" style="margin-top:20px"><button class="btn confirm" data-act="save">${isNew ? 'Create issue' : 'Save changes'}</button><button class="btn" data-act="cancel">Cancel</button></div></div>`)) return;
+  acts = {
+    cancel: () => history.back(),
+    async save(el){ const title = $('#f-title').value.trim(); if (!title) return toast('Add a title');
+      const body = { title, description: edVal($('#f-desc')), confidential: $('#f-conf').checked, assignee_ids: PICK.assignees.map(u => u.id), labels: [...PICK.labels].join(','), due_date: $('#f-due').value || null };
+      let res; const ok = await busy(el, async () => { res = isNew ? await api(`/projects/${pr.id}/issues`, { method:'POST', body }) : await api(`/projects/${pr.id}/issues/${is.iid}`, { method:'PUT', body }); }, isNew ? 'Issue created' : 'Changes saved');
+      if (ok) location.replace(`#/p/${pr.id}/issue/${res.iid}`); }
+  };
 }
 
-function newIssue(pid, name){
-  push(async () => {
-    render(`<div class="card"><label for="t">Title</label><input id="t"><label for="d">Description</label><textarea id="d"></textarea>
-      <label for="l">Labels (comma-separated)</label><input id="l"><div class="actions"><button class="btn" id="create">Create issue</button></div></div>`);
-    $('#create').onclick = async () => { const title=$('#t').value.trim(); if(!title){ toast('Add a title first'); return; }
-      try{ const i = await api(`/projects/${pid}/issues`,{method:'POST',body:{title, description:$('#d').value, labels:$('#l').value}}); toast('Issue created'); stack.pop(); issueDetail(pid, i.iid); }catch(e){ toast(e.message); } };
-  }, 'New issue · ' + name);
+/* ================= Pipelines ================= */
+function pipeRow(pid, pl){ return `<div class="item" data-go="#/p/${pid}/pipeline/${pl.id}">${ci(pl.status)}<div class="grow"><div class="title">#${pl.id} <span class="meta" style="font-weight:400">${esc(ciText(pl.status))}</span></div><div class="meta">${ic('branch',13)} ${esc(pl.ref)} · <span class="sha">${esc(pl.sha.slice(0,8))}</span>${pl.source?' · '+esc(pl.source.replace(/_/g,' ')):''}</div></div><span class="meta nowrap">${ago(pl.updated_at || pl.created_at)}</span></div>`; }
+async function vPipelines({ p, R }){
+  const pr = await proj(p.pid); head('Pipelines', pr.path_with_namespace);
+  const pls = await api(`/projects/${pr.id}/pipelines?per_page=40`);
+  if (!R(`<div class="toolbar"><span class="grow meta">Most recent first</span><button class="btn confirm" data-act="run">${ic('play',14)} Run pipeline</button></div>` + (pls.length ? `<div class="list">${pls.map(pl => pipeRow(pr.id, pl)).join('')}</div>` : empty('No pipelines yet')))) return;
+  acts.run = el => { const ref = prompt('Run a pipeline on which branch or tag?', pr.default_branch); if (!ref) return;
+    busy(el, async () => { const pl = await api(`/projects/${pr.id}/pipeline`, { method:'POST', body:{ ref } }); go(`#/p/${pr.id}/pipeline/${pl.id}`); }, 'Pipeline started'); };
+}
+async function vPipeline({ p, R, id }){
+  const pr = await proj(p.pid);
+  const [pl, jobs, bridges] = await Promise.all([api(`/projects/${pr.id}/pipelines/${p.id}`), all(`/projects/${pr.id}/pipelines/${p.id}/jobs`, 3), api(`/projects/${pr.id}/pipelines/${p.id}/bridges`).catch(() => [])]);
+  head('Pipeline #' + pl.id, pr.path_with_namespace, [{ label:'Open in GitLab', fn:() => openExt(pl.web_url) }]);
+  const js = [...jobs, ...bridges.map(b => ({ ...b, bridge:true }))].sort((a, b) => a.id - b.id);
+  const stages = [...new Set(js.map(j => j.stage))];
+  const jact = j => j.bridge ? '' : ['failed','canceled','success'].includes(j.status) ? `<button class="icon-btn" data-act="jretry" data-id="${j.id}" aria-label="Retry ${esc(j.name)}">${ic('retry')}</button>` : j.status === 'manual' ? `<button class="icon-btn" data-act="jplay" data-id="${j.id}" aria-label="Run ${esc(j.name)}">${ic('play')}</button>` : RUNNING.includes(j.status) ? `<button class="icon-btn" data-act="jcancel" data-id="${j.id}" aria-label="Cancel ${esc(j.name)}">${ic('stop')}</button>` : '';
+  if (!R(`<div class="page-h"><div>${ci(pl.status)} <b>${esc(ciText(pl.status))}</b></div><div class="meta" style="margin-top:6px">${ic('branch',13)} ${esc(pl.ref)} · <a href="#/p/${pr.id}/commit/${pl.sha}" class="sha">${esc(pl.sha.slice(0,8))}</a>${pl.user?` · triggered by ${esc(pl.user.name)}`:''} · ${ago(pl.created_at)}${pl.duration?` · took ${dur(pl.duration)}`:''}</div>
+    <div class="btns">${pl.status==='failed'||pl.status==='canceled'?'<button class="btn" data-act="retry2">'+ic('retry',14)+' Retry failed jobs</button>':''}${RUNNING.includes(pl.status)?'<button class="btn danger-o" data-act="cancel">Cancel pipeline</button>':''}</div></div>` +
+    stages.map(s => `<div class="stage">${esc(s)}</div><div class="list">${js.filter(j => j.stage === s).map(j => `<div class="item" ${j.bridge ? (j.downstream_pipeline ? `data-go="#/p/${j.downstream_pipeline.project_id}/pipeline/${j.downstream_pipeline.id}"` : '') : `data-go="#/p/${pr.id}/job/${j.id}"`}>${ci(j.status)}<div class="grow"><div class="title" style="font-weight:500">${esc(j.name)}${j.bridge?' <span class="badge b-neutral">downstream</span>':''}${j.allow_failure&&j.status==='failed'?' <span class="badge b-warn">allowed to fail</span>':''}</div><div class="meta">${esc(ciText(j.status))}${j.duration?' · '+dur(j.duration):''}</div></div>${jact(j)}</div>`).join('')}</div>`).join(''))) return;
+  const J = `/projects/${pr.id}/jobs/`;
+  acts = {
+    retry2: el => busy(el, async () => { await api(`/projects/${pr.id}/pipelines/${pl.id}/retry`, { method:'POST' }); await reload(); }, 'Retrying failed jobs'),
+    cancel: el => confirm('Cancel this pipeline?') && busy(el, async () => { await api(`/projects/${pr.id}/pipelines/${pl.id}/cancel`, { method:'POST' }); await reload(); }, 'Pipeline canceled'),
+    jretry: el => busy(el, async () => { await api(J + el.dataset.id + '/retry', { method:'POST' }); await reload(); }, 'Job retried'),
+    jplay: el => busy(el, async () => { await api(J + el.dataset.id + '/play', { method:'POST' }); await reload(); }, 'Job started'),
+    jcancel: el => busy(el, async () => { await api(J + el.dataset.id + '/cancel', { method:'POST' }); await reload(); }, 'Job canceled')
+  };
+  if (RUNNING.includes(pl.status)) setTimeout(() => { if (id === navId) reload(); }, 10000);
+}
+async function vJob({ p, R, id, keep }){
+  const pr = await proj(p.pid), J = `/projects/${pr.id}/jobs/${p.id}`;
+  const j = await api(J); head(j.name, `Job #${j.id} · ${pr.path_with_namespace}`, [{ label:'Open in GitLab', fn:() => openExt(j.web_url) }]);
+  let log = ''; try { log = await api(J + '/trace', { raw:true }); } catch {}
+  log = log.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').replace(/section_(start|end):\d+:[^\r\n]*?(\r|$)/gm, '').split('\n').map(l => l.split('\r').filter(Boolean).pop() || '').join('\n');
+  const btns = ['failed','canceled','success'].includes(j.status) ? `<button class="btn" data-act="retry3">${ic('retry',14)} Retry</button>` : j.status === 'manual' ? `<button class="btn confirm" data-act="play">${ic('play',14)} Run job</button>` : RUNNING.includes(j.status) ? `<button class="btn danger-o" data-act="cancel">Cancel job</button>` : '';
+  if (!R(`<div class="page-h"><div>${ci(j.status)} <b>${esc(ciText(j.status))}</b>${j.duration?` <span class="meta">· ${dur(j.duration)}</span>`:''}</div><div class="meta" style="margin-top:6px">Stage ${esc(j.stage)} · ${ic('branch',13)} ${esc(j.ref)}${j.runner?` · runner ${esc(j.runner.description || j.runner.id)}`:''}</div>${btns?`<div class="btns">${btns}<button class="btn tertiary" data-act="bottom">Jump to end</button></div>`:''}</div><div class="log">${esc(log.slice(-200000)) || 'No log output yet.'}</div>`)) return;
+  if (!keep) window.scrollTo(0, document.body.scrollHeight);
+  acts = {
+    bottom: () => window.scrollTo(0, document.body.scrollHeight),
+    retry3: el => busy(el, async () => { const n = await api(J + '/retry', { method:'POST' }); location.replace(`#/p/${pr.id}/job/${n.id}`); }, 'Job retried'),
+    play: el => busy(el, async () => { await api(J + '/play', { method:'POST' }); await reload(); }, 'Job started'),
+    cancel: el => busy(el, async () => { await api(J + '/cancel', { method:'POST' }); await reload(); }, 'Job canceled')
+  };
+  if (RUNNING.includes(j.status)) setTimeout(() => { if (id === navId) reload(); }, 5000);
 }
 
-/* ---------- Projects ---------- */
-function projectList(){
-  push(async () => {
-    const ps = await api('/projects?membership=true&simple=true&order_by=last_activity_at&per_page=50');
-    render(`<input class="search" id="f" placeholder="Filter projects" type="search">
-      <div class="list" id="pl">${ps.map(p=>`<button class="row" data-id="${p.id}" data-n="${esc(p.path_with_namespace)}"><div class="t">${esc(p.name)}</div><div class="m">${esc(p.path_with_namespace)} · ${ago(p.last_activity_at)}</div></button>`).join('')}</div>`);
-    $('#f').oninput = e => { const q=e.target.value.toLowerCase(); document.querySelectorAll('#pl .row').forEach(r=>r.hidden=!r.dataset.n.toLowerCase().includes(q)); };
-    document.querySelectorAll('#pl .row').forEach(r=>r.onclick=()=>projectDetail(r.dataset.id, r.dataset.n));
-  }, 'Projects');
-}
-
-function projectDetail(pid, name){
-  push(async () => {
-    const [p, commits] = await Promise.all([api(`/projects/${pid}`), api(`/projects/${pid}/repository/commits?per_page=15`)]);
-    render(`<div class="card"><h2>${esc(p.name)}</h2><div class="hint">${esc(p.path_with_namespace)} · default branch ${esc(p.default_branch)}</div>
-      <div class="actions"><button class="btn" id="pipes">Pipelines</button><button class="btn ghost" id="mrs">Open MRs</button><button class="btn ghost" id="ni">New issue</button></div></div>
-      <p class="hint" style="margin:14px 4px 6px">Recent commits</p>
-      <div class="list">${commits.map(c=>`<div class="row"><div class="t">${esc(c.title)}</div><div class="m">${esc(c.short_id)} · ${esc(c.author_name)} · ${ago(c.created_at)}</div></div>`).join('')}</div>`);
-    $('#pipes').onclick = () => pipelineList(pid, p.name);
-    $('#ni').onclick = () => newIssue(pid, p.name);
-    $('#mrs').onclick = () => push(async () => {
-      const mrs = await api(`/projects/${pid}/merge_requests?state=opened&per_page=40`);
-      render(mrs.length?`<div class="list">${mrs.map(m=>`<button class="row" data-i="${m.iid}"><div class="t">${esc(m.title)}</div><div class="m">!${m.iid} · ${esc(m.author.name)} · ${ago(m.updated_at)}</div></button>`).join('')}</div>`:'<div class="empty">No open merge requests.</div>');
-      document.querySelectorAll('.row').forEach(r=>r.onclick=()=>mrDetail(pid, r.dataset.i));
-    }, 'MRs · ' + p.name);
-  }, name.split('/').pop());
-}
-
-/* ---------- Settings ---------- */
-function settings(){
-  push(async () => {
-    render(`<div class="card"><h2>Connect to GitLab</h2>
-      <label for="h">GitLab address</label><input id="h" type="url" inputmode="url" placeholder="https://gitlab.yourcompany.com" value="${esc(cfg.host)}">
-      <label for="k">Personal access token</label><input id="k" type="password" autocomplete="off" placeholder="glpat-…" value="${esc(cfg.token)}">
-      <p class="hint">Scopes needed: <b>api</b> (read and write). The token stays on this phone only and is sent straight to your GitLab server, nowhere else.</p>
-      <div class="actions"><button class="btn" id="save">Save and test</button>${cfg.token?'<button class="btn danger" id="out">Remove token</button>':''}</div>
-      <p id="st" class="hint"></p></div>`);
-    $('#save').onclick = async () => {
-      cfg.host = $('#h').value.trim().replace(/\/$/,''); cfg.token = $('#k').value.trim(); me = null;
-      $('#st').textContent = 'Testing…';
-      try { const u = await getMe(); store.set('gl_host', cfg.host); store.set('gl_token', cfg.token);
-        $('#st').textContent = `Connected as ${u.name} (@${u.username}).`; toast('Connected'); }
-      catch(e){ $('#st').textContent = 'Couldn’t connect: ' + e.message + '. Is the VPN on?'; }
-    };
-    if ($('#out')) $('#out').onclick = () => { store.del('gl_token'); cfg.token=''; me=null; toast('Token removed'); show(); };
-  }, 'Settings');
-}
-
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-switchTab(cfg.host && cfg.token ? 'mrs' : 'settings');
+/* ================= Wiring ================= */
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (a) { const f = acts[a.dataset.act] || gacts[a.dataset.act]; if (f) { e.preventDefault(); e.stopPropagation(); f(a, e); return; } }
+  const x = e.target.closest('[data-ext]'); if (x) { e.preventDefault(); openExt(x.dataset.ext); return; }
+  const g = e.target.closest('[data-go]'); if (g) { e.preventDefault(); go(g.dataset.go); return; }
+  const l = e.target.closest('.md a[href]'); if (l) { e.preventDefault(); if (l.getAttribute('href').startsWith('#')) return; openExt(l.href); }
+});
+let inTimer;
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.pick) return pickSearch(t);
+  if (t.dataset.in && inputs[t.dataset.in]) { clearTimeout(inTimer); inTimer = setTimeout(() => inputs[t.dataset.in](t.value.trim()), 300); }
+});
+$('#back').onclick = () => { if (history.length > 1) history.back(); else go('#/'); };
+$('#refresh').onclick = () => { route(true); refreshTodoBadge(); };
+$('#more').onclick = () => menuItems && sheet(menuItems);
+window.addEventListener('hashchange', () => route());
+const APP_ICONS = [['classic','Classic'],['daylight','Daylight'],['violet','Violet'],['ocean','Ocean'],['forest','Forest'],['ember','Ember'],['mono','Mono'],['pipeline','Pipeline']];
+function applyIcon(k){ $('#mf').href = `manifest-${k}.webmanifest`; $('#fav').href = `icons/${k}.svg`; $('#ati').href = `icons/${k}-180.png`; }
+function applyTheme(){ const t = store.get('theme'); if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+let started = false;
+function start(){ if (started) return; started = true; applyTheme(); route(); if (cfg.token) refreshTodoBadge();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {}); }
+document.addEventListener('DOMContentLoaded', start);
+setTimeout(start, 3000);
 </script>
 </body>
 </html>
